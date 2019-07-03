@@ -358,11 +358,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 			}
 			stage('Archive') {
 				steps {
-					script {
-						def outputs = autolistrpms().collect{ funcs.wrapLi(funcs.escapeXml(it)) }.join("\n")
-						currentBuild.description = ((currentBuild.description == null) ? "" : currentBuild.description) + "<p>Outputs:</p>" + funcs.wrapUl(outputs)
-						archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
-					}
+					archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
 				}
 			}
 			stage('Publish') {
