@@ -1,7 +1,7 @@
 def call() {
 	def buildName = sh(
 		script: '''#!/bin/sh
-			for a in src upstream upstream/*
+			for a in . src upstream upstream/*
 			do
 				if test -d "$a" && test -d "$a"/.git
 				then
