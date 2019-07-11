@@ -292,6 +292,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 						steps {
 							script {
 								if (srpm_step != null) {
+									println srpm_step
 									srpm_step()
 								} else {
 									dir('src') {
