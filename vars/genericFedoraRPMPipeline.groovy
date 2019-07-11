@@ -358,7 +358,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 			}
 			stage('Sign') {
 				steps {
-					sh '''#!/bin/bash -ex
+					sh '''#!/bin/bash -e
 					olddir="$PWD"
 					cd "$JENKINS_HOME"
 					PRIVKEY=
@@ -381,14 +381,23 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 					    trap 'echo rm -rf "$tmpdir"' EXIT
 					  fi
 					  export GNUPGHOME="$tmpdir"
-					  gpg2 --import < "$PRIVKEY"
+					  errout=$(gpg2 --import < "$PRIVKEY" 2>&1) || {
+					    ret=$?
+					    >&2 echo "$errout"
+					    return $ret
+					  }
 					  GPG_NAME=$( gpg2 --list-keys | egrep '^      ([ABCDEF0-9])*$' | head -1 )
-					  rpm --addsign \
+					  >&2 echo "Signing package $1."
+					  errout=$(rpm --addsign \
 					    --define "%_gpg_name $GPG_NAME" \
 					    --define '_signature gpg' \
 					    --define '_gpgbin /usr/bin/gpg2' \
 					    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
-					    "$1"
+					    "$1" 2>&1) || {
+					    ret=$?
+					    >&2 echo "$errout"
+					    return $ret
+					  }
 					  rpm -K "$1" || true
 					  rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
 					}
