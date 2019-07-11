@@ -358,7 +358,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 			}
 			stage('Sign') {
 				steps {
-					sh '''#!/bin/bash -e
+					sh '''#!/bin/bash -ex
 					olddir="$PWD"
 					cd "$JENKINS_HOME"
 					PRIVKEY=
