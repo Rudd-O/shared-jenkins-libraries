@@ -356,6 +356,48 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 					unstash 'out'
 				}
 			}
+			stage('Sign') {
+				steps {
+					sh '''#!/bin/bash -e
+					olddir="$PWD"
+					cd "$JENKINS_HOME"
+					PRIVKEY=
+					if test -d rpm-sign ; then
+					  for f in rpm-sign/RPM-GPG-KEY-*.private.asc ; do
+					    if test -f "$f" ; then
+					      PRIVKEY="$PWD"/"$f"
+					      break
+					    fi
+					  done
+					fi
+					if [ "$PRIVKEY" == "" ] ; then
+					  >&2 echo error: could not find PRIVKEY in rpm-sign/, aborting
+					  exit 40
+					fi
+					cd "$olddir"
+					sign() {
+					  if [ -z "$tmpdir" ] ; then
+					    tmpdir=$(mktemp -d)
+					    trap 'echo rm -rf "$tmpdir"' EXIT
+					  fi
+					  export GNUPGHOME="$tmpdir"
+					  gpg2 --import < "$PRIVKEY"
+					  GPG_NAME=$( gpg2 --list-keys | egrep '^      ([ABCDEF0-9])*$' | head -1 )
+					  rpm --addsign \
+					    --define "%_gpg_name $GPG_NAME" \
+					    --define '_signature gpg' \
+					    --define '_gpgbin /usr/bin/gpg2' \
+					    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
+					    "$2"
+					  rpm -K "$1" || true
+					  rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
+					}
+					for rpm in out/*/*.rpm ; do
+					  sign "$rpm"
+					done
+					'''
+				}
+			}
 			stage('Archive') {
 				steps {
 					archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
