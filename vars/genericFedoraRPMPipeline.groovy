@@ -388,7 +388,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 					    --define '_signature gpg' \
 					    --define '_gpgbin /usr/bin/gpg2' \
 					    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
-					    "$2"
+					    "$1"
 					  rpm -K "$1" || true
 					  rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
 					}
