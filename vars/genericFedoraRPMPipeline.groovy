@@ -420,8 +420,10 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 					}
 				}
 				steps {
-					script {
-						autouploadfedorarpms()
+					lock('autouploadfedorarpms') {
+						script {
+							autouploadfedorarpms()
+						}
 					}
 				}
 			}
