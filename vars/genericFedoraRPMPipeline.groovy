@@ -414,7 +414,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 					archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
 				}
 			}
-			stage('Integration')
+			stage('Integration') {
 				when {
 					expression {
 						return integration_step != null
