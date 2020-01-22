@@ -421,7 +421,9 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 					}
 				}
 				steps {
-					integration_step
+					script {
+						integration_step()
+					}
 				}
 			}
 			stage('Publish') {
