@@ -1,4 +1,4 @@
-def f(pkgname, sha256sum) {
+def f(pkgname, sha256sum, armsha256sum='') {
 	script {
 		dir("upstream") {
 			sh "sed -i 's|{{release}}|%{?build_number}%{?!build_number:{{release}}}|g' templates/spec.tpl"
@@ -12,14 +12,15 @@ def f(pkgname, sha256sum) {
 			"upstream/${pkgname}",
 			"src",
 			sha256sum,
+			armsha256sum,
 		)()
 	}
 }
 
-def call(pkgname, sha256sum) {
+def call(pkgname, sha256sum, armsha256sum='') {
     return {
         script {
-            f(pkgname, sha256sum)
+            f(pkgname, sha256sum, armsha256sum)
         }
     }
 }

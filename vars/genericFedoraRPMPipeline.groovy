@@ -35,7 +35,7 @@ function suspendshellverbose() {
 }
 
 function mockfedorarpms() {
-# build $3- for fedora release number $1 and deposit in $2
+# build $4- for fedora release number $1 arch $2 and deposit in $3
   local tailpids
   local relpath
   local retval
@@ -52,14 +52,17 @@ function mockfedorarpms() {
 
 # NO: groups | grep -q ^mock || exec sg mock -c "$SHELL -xe $0"
 
-  relpath=`python -c 'import os, sys ; print os.path.relpath(sys.argv[1])' "$2"`
+  relpath=`python -c 'import os, sys ; print os.path.relpath(sys.argv[1])' "$3"`
 
   release="$1"
+  target="$2"
+  shift
   shift
   shift
 
   test -x /usr/local/bin/mocklock && m=/usr/local/bin/mocklock || m=./mocklock
   $m -r fedora-"$release"-x86_64-generic \
+    --target "$target" \
     --no-clean --no-cleanup-after --unpriv \
     --define "$definebuildnumber" \
     --resultdir=./"$relpath"/ --rebuild "$@" &
@@ -83,7 +86,7 @@ function automockfedorarpms() {
     test -f "$file" || { echo "$file is not a source RPM" >&2 ; return 19 ; }
   done
   mkdir -p out/$2
-  suspendshellverbose mockfedorarpms $1 $2 out/$2/ src/*.src.rpm
+  suspendshellverbose mockfedorarpms $1 $2 $3 out/$2/ src/*.src.rpm
   # mv -f src/*.src.rpm out/
 }
 
@@ -109,7 +112,14 @@ def autolistrpms() {
 }
 
 def automockfedorarpms(myRelease) {
-	sh("set -e\n" + shellLib() + "\nautomockfedorarpms --define_build_number ${myRelease}")
+	if (myRelease.indexOf(":") != -1) {
+		stuff = myRelease.split(':')
+		myRelease = stuff[0]
+		myArch = stuff[1]
+	} else {
+		myArch = "x86_64"
+	}
+	sh("set -e\n" + shellLib() + "\nautomockfedorarpms --define_build_number ${myRelease} ${myArch}")
 }
 
 def automockfedorarpms_all(releases) {
