@@ -163,6 +163,10 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 			}
 			stage('Checkout') {
 				steps {
+				script{
+				println params.RELEASE
+				throw new Exception("abc")
+				}
 					dir('out') {
 						deleteDir()
 					}
