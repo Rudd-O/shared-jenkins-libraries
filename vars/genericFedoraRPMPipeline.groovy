@@ -132,8 +132,6 @@ def autouploadfedorarpms(myRelease) {
 }
 
 def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_step = null) {
-	def RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '28')
-
 	pipeline {
 
 		agent { label 'master' }
@@ -149,7 +147,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 		}
 
 		parameters {
-			string defaultValue: '', description: "Override which Fedora releases to build for.  If empty, defaults to ${RELEASE}.", name: 'RELEASE', trim: true
+			string defaultValue: funcs.loadParameter('parameters.groovy', 'RELEASE', '30'), description: "Override which Fedora releases to build for.", name: 'RELEASE', trim: true
 		}
 
 		stages {
