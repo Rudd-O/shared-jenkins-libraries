@@ -131,6 +131,8 @@ def autouploadfedorarpms(myRelease) {
 	sh("set -e\n" + shellLib() + "\nautouploadrpms")
 }
 
+def RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
+
 def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_step = null) {
 	pipeline {
 
@@ -147,7 +149,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 		}
 
 		parameters {
-			string defaultValue: funcs.loadParameter('parameters.groovy', 'RELEASE', '30'), description: "Override which Fedora releases to build for.", name: 'RELEASE', trim: true
+			string defaultValue: RELEASE, description: "Override which Fedora releases to build for.", name: 'RELEASE', trim: true
 		}
 
 		stages {
@@ -333,11 +335,8 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 								deleteDir()
 							}
 							script {
-								if (params.RELEASE != '') {
-									RELEASE = params.RELEASE
-								}
-								println "Building RPMs for Fedora releases ${RELEASE}"
-								parallel automockfedorarpms_all(RELEASE.split(' '))
+								println "Building RPMs for Fedora releases ${params.RELEASE}"
+								parallel automockfedorarpms_all(params.RELEASE.split(' '))
 							}
 						}
 					}
