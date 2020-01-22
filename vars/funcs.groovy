@@ -184,14 +184,18 @@ def getUpstreamProject(currentBuild) {
 def loadParameter(filename, name, defaultValue) {
     GroovyShell shell = new GroovyShell()
     defaultsScript = [:]
+    def path = env.JENKINS_HOME + "/jobs/" + env.JOB_NAME + "/" + "parameters.groovy"
     try {
-        defaultsScript = shell.parse(new File(env.JENKINS_HOME + "/jobs/" + env.JOB_NAME + "/" + "parameters.groovy")).run()
+        defaultsScript = shell.parse(new File(path)).run()
     }
     catch(IOException ex){
+        println "Could not load from ${path}"
+        path = env.JENKINS_HOME + "/jobs/" + env.JOB_NAME.split("/")[0] + "/" + "parameters.groovy"
         try {
-            defaultsScript = shell.parse(new File(env.JENKINS_HOME + "/jobs/" + env.JOB_NAME.split("/")[0] + "/" + "parameters.groovy")).run()
+            defaultsScript = shell.parse(new File(path)).run()
         }
         catch(IOException ex2) {
+            println "Could not load from ${path} either"
 	    defaultsScript = [:]
         }
     }
@@ -199,6 +203,7 @@ def loadParameter(filename, name, defaultValue) {
     if (x) {
         return x
     }
+    println "Could not find parameter ${name}"
     return defaultValue
 }
 
