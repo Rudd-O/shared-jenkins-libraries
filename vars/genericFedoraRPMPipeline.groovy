@@ -131,7 +131,7 @@ def autouploadfedorarpms(myRelease) {
 	sh("set -e\n" + shellLib() + "\nautouploadrpms")
 }
 
-def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
+def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_step = null) {
 	def RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '28')
 
 	pipeline {
@@ -412,6 +412,18 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null) {
 			stage('Archive') {
 				steps {
 					archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
+				}
+			}
+			stage('Integration')
+				when {
+					expression {
+						return integration_step != null
+					}
+				}
+				steps {
+					script {
+						integration_step()
+					}
 				}
 			}
 			stage('Publish') {
