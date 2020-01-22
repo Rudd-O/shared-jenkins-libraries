@@ -201,9 +201,10 @@ def loadParameter(filename, name, defaultValue) {
     }
     x = defaultsScript.find{ it.key == name }?.value
     if (x) {
+        println "Loaded parameter ${name}=${x} from ${path}"
         return x
     }
-    println "Could not find parameter ${name}"
+    println "Could not find parameter ${name}, returning default ${defaultValue}"
     return defaultValue
 }
 

@@ -149,12 +149,19 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 		}
 
 		parameters {
-			string defaultValue: RELEASE, description: "Override which Fedora releases to build for.", name: 'RELEASE', trim: true
+			string defaultValue: '', description: "Which Fedora releases to build for (empty means the job's default).", name: 'RELEASE', trim: true
 		}
 
 		stages {
 			stage('Begin') {
 				steps {
+					script{
+						if (params.RELEASE == '') {
+							env.RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
+						} else {
+							env.RELEASE = params.RELEASE
+						}
+					}
 					script {
 						funcs.announceBeginning()
 						funcs.durable()
@@ -163,10 +170,6 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 			}
 			stage('Checkout') {
 				steps {
-				script{
-				println params.RELEASE
-				throw new Exception("abc")
-				}
 					dir('out') {
 						deleteDir()
 					}
@@ -339,8 +342,8 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 								deleteDir()
 							}
 							script {
-								println "Building RPMs for Fedora releases ${params.RELEASE}"
-								parallel automockfedorarpms_all(params.RELEASE.split(' '))
+								println "Building RPMs for Fedora releases ${env.RELEASE}"
+								parallel automockfedorarpms_all(env.RELEASE.split(' '))
 							}
 						}
 					}
