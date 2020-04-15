@@ -34,6 +34,136 @@ function suspendshellverbose() {
     return $retval
 }
 
+function mocklock() {
+    local release="$1"
+    shift
+    local arch="$1"
+    shift
+
+    local jail="fedora-$release-$arch-generic"
+    mkdir -p ~/.mock
+    local cfg=~/.mock/"$jail.cfg"
+    local root=~/.mock/"$jail"
+
+    local tmpcfg=$(mktemp ~/.mock/XXXXXX)
+    cat > "$tmpcfg" <<EOF
+config_opts['root'] = '$root'
+config_opts['target_arch'] = '$arch'
+config_opts['legal_host_arches'] = ('$arch',)
+# rpmdevtools was installed to support rpmdev-bumpspec below
+# python-setuptools was installed to allow for python builds
+config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools /usr/bin/python'
+config_opts['extra_chroot_dirs'] = ['/run/lock']
+config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
+config_opts['releasever'] = '$release'
+config_opts['nosync'] = True
+config_opts['nosync_force'] = True
+config_opts['plugin_conf']['ccache_enable'] = False
+config_opts['use_nspawn'] = True
+config_opts['cleanup_on_success'] = False
+config_opts['cleanup_on_failure'] = False
+config_opts['package_manager'] = 'dnf'
+config_opts['rpmbuild_networking'] = False
+config_opts['plugin_conf']['root_cache_enable'] = True
+
+config_opts['yum.conf'] = """
+[main]
+keepcache=1
+cachedir=/var/cache/yum
+debuglevel=9
+reposdir=/dev/null
+logfile=/var/log/yum.log
+retries=20
+obsoletes=1
+gpgcheck=1
+assumeyes=1
+syslog_ident=mock
+syslog_device=
+install_weak_deps=0
+metadata_expire=0
+mdpolicy=group:primary
+best=1
+
+# repos
+
+[fedora]
+name=fedora
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-\\$releasever&arch=\\$basearch
+failovermethod=priority
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-\\$releasever-primary
+gpgcheck=1
+
+[updates]
+name=updates
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f\\$releasever&arch=\\$basearch
+failovermethod=priority
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-\\$releasever-primary
+gpgcheck=1
+
+[rpmfusion-free]
+name=RPM Fusion for Fedora \\$releasever - Free
+#baseurl=http://download1.rpmfusion.org/free/fedora/releases/\\$releasever/Everything/\\$basearch/os/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-\\$releasever&arch=\\$basearch
+enabled=1
+metadata_expire=7d
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
+
+[rpmfusion-free-updates]
+name=RPM Fusion for Fedora \\$releasever - Free - Updates
+#baseurl=http://download1.rpmfusion.org/free/fedora/updates/\\$releasever/\\$basearch/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-updates-released-\\$releasever&arch=\\$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
+
+[rpmfusion-nonfree]
+name=RPM Fusion for Fedora \\$releasever - Nonfree
+#baseurl=http://download1.rpmfusion.org/nonfree/fedora/releases/\\$releasever/Everything/\\$basearch/os/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-\\$releasever&arch=\\$basearch
+enabled=1
+metadata_expire=7d
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
+
+[rpmfusion-nonfree-updates]
+name=RPM Fusion for Fedora \\$releasever - Nonfree - Updates
+#baseurl=http://download1.rpmfusion.org/nonfree/fedora/updates/\\$releasever/\\$basearch/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-updates-released-\\$releasever&arch=\\$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
+
+[dragonfear]
+name=dragonfear
+baseurl=http://dnf-updates.dragonfear/fc\\$releasever/
+gpgcheck=0
+metadata_expire=30
+"""
+EOF
+
+    if cmp "$cfg" "$tmpcfg" ; then
+        rm -f "$tmpcfg"
+    else
+        mv -f "$tmpcfg" "$cfg"
+        echo Configured "$cfg" as follows >&2
+        echo =============================== >&2
+        cat "$cfg" >&2
+        echo =============================== >&2
+    fi
+
+    jaillock="$cfg".lock
+
+    flock "$jaillock" bash -c '
+        rpm -q mock nosync >/dev/null 2>&1 || {
+            echo Initializing local packages mock nosync.
+            sudo dnf install -qy mock nosync || exit $?
+        }
+    ' >&2
+
+    flock "$jaillock" /usr/bin/mock -r "$cfg" "$@"
+}
+
 function mockfedorarpms() {
 # build $4- for fedora release number $1 arch $2 and deposit in $3
   local tailpids
@@ -50,8 +180,6 @@ function mockfedorarpms() {
      shift
   fi
 
-# NO: groups | grep -q ^mock || exec sg mock -c "$SHELL -xe $0"
-
   relpath=`python -c 'import os, sys ; print os.path.relpath(sys.argv[1])' "$3"`
 
   release="$1"
@@ -60,10 +188,8 @@ function mockfedorarpms() {
   shift
   shift
 
-  test -x /usr/local/bin/mocklock && m=/usr/local/bin/mocklock || m=./mocklock
-  $m -r fedora-"$release"-x86_64-generic \
-    --target "$target" \
-    --no-clean --no-cleanup-after --unpriv \
+  mocklock "$release" "$target" \
+    --unpriv \
     --define "$definebuildnumber" \
     --resultdir=./"$relpath"/ --rebuild "$@" &
   pid=$!
@@ -230,7 +356,6 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 						).trim()
 					}
 					updateBuildNumberDisplayName()
-					sh 'cp -a /var/lib/jenkins/userContent/mocklock .'
 					stash includes: '**', name: 'source', useDefaultExcludes: false
 				}
 			}
