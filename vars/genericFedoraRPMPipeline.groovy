@@ -44,9 +44,13 @@ function mocklock() {
     mkdir -p ~/.mock
     local cfg=~/.mock/"$jail.cfg"
     local root=~/.mock/"$jail"
+    local basedir=~/.mock
+    local cache_topdir=~/.mock/cache-"$jail"
 
     local tmpcfg=$(mktemp ~/.mock/XXXXXX)
     cat > "$tmpcfg" <<EOF
+config_opts['basedir'] = '$basedir'
+config_opts['cache_topdir'] = '$cache_topdir'
 config_opts['root'] = '$root'
 config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
