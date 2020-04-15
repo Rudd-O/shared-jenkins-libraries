@@ -40,12 +40,12 @@ function mocklock() {
     local arch="$1"
     shift
 
-    local jail="fedora-$release-$arch-generic"
-    mkdir -p ~/.mock
-    local cfg=~/.mock/"$jail.cfg"
-    local root=~/.mock/"$jail"
     local basedir=~/.mock
-    local cache_topdir=~/.mock/cache-"$jail"
+    mkdir -p "$basedir"
+    local jail="fedora-$release-$arch-generic"
+    local cfg="$basedir/$jail.cfg"
+    local root="$basedir/jail/$jail"
+    local cache_topdir="$basedir"/cache
 
     local tmpcfg=$(mktemp ~/.mock/XXXXXX)
     cat > "$tmpcfg" <<EOF
