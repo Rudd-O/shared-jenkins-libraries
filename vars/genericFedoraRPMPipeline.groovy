@@ -443,7 +443,10 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									srpm_step()
 								} else {
 									dir('src') {
-										if (fileExists('setup.py')) {
+										// The Makefile.builder signifies we have to make an SRPM
+										// using make, and ignore setup.py, because this is a
+										// Qubes OS builder-powered project.
+										if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
 											sh '''
 												set -e
 												rm -rf build dist
