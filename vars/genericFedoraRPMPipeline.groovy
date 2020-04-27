@@ -383,6 +383,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python3-setuptools_scm_git_archive',
 									'python2-pyyaml',
 									'python3-PyYAML',
+									'python3-pyxdg', // Some tests need this.
 									'golang',
 								])
 								if (srpm_deps != null) {
