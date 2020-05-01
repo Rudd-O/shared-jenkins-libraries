@@ -34,11 +34,9 @@ function suspendshellverbose() {
     return $retval
 }
 
-function mocklock() {
+function config_mocklock() {
     local release="$1"
-    shift
-    local arch="$1"
-    shift
+    local arch="$2"
 
     local basedir=~/.mock
     mkdir -p "$basedir"
@@ -155,7 +153,16 @@ EOF
         cat "$cfg" >&2
         echo =============================== >&2
     fi
+    echo "$cfg"
+}
 
+function mocklock() {
+    local release="$1"
+    shift
+    local arch="$1"
+    shift
+
+    cfg=$( config_mocklock "$release" "$arch" )
     jaillock="$cfg".lock
 
     flock "$jaillock" bash -c '
@@ -410,7 +417,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 										set -e
 										rm -f ../xunit.xml
 										if test -f setup.py ; then
-											relnum=$(rpm -q fedora-release --queryformat '%{version}')
+											relnum=$(rpm -qa 'fedora-release*' --queryformat '%{version}\n' | head -1)
 											if head -1 setup.py | grep -q python3 ; then
 												python=nosetests-3
 											elif head -1 setup.py | grep -q python2 ; then
@@ -451,7 +458,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 											sh '''
 												set -e
 												rm -rf build dist
-												relnum=$(rpm -q fedora-release --queryformat '%{version}')
+											relnum=$(rpm -qa 'fedora-release*' --queryformat '%{version}\n' | head -1)
 												if head -1 setup.py | grep -q python3 ; then
 													python=python3
 												elif head -1 setup.py | grep -q python2 ; then
