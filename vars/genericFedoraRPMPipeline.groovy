@@ -162,6 +162,9 @@ function mocklock() {
     local arch="$1"
     shift
 
+    echo About to run mock. >&2
+    echo "I am user $(whoami)." >&2
+
     cfg=$( config_mocklock "$release" "$arch" )
     jaillock="$cfg".lock
 
