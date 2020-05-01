@@ -38,14 +38,14 @@ function config_mocklock() {
     local release="$1"
     local arch="$2"
 
-    local basedir=~/.mock
+    local basedir=$WORKSPACE/mock
     mkdir -p "$basedir"
     local jail="fedora-$release-$arch-generic"
     local cfg="$basedir/$jail.cfg"
     local root="$basedir/jail/$jail"
     local cache_topdir="$basedir"/cache
 
-    local tmpcfg=$(mktemp ~/.mock/XXXXXX)
+    local tmpcfg=$(mktemp "$BASEDIR"/XXXXXX)
     cat > "$tmpcfg" <<EOF
 config_opts['basedir'] = '$basedir'
 config_opts['cache_topdir'] = '$cache_topdir'
