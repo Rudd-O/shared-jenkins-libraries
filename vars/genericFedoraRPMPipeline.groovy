@@ -418,6 +418,9 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python3-PyYAML',
 									'python3-pyxdg', // Some tests need this.
 									'golang',
+									'make',
+									'autoconf',
+									'automake',
 									'wget',
 								])
 								if (srpm_deps != null) {
