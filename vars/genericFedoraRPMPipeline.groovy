@@ -170,6 +170,8 @@ function mocklock() {
     shift
     local arch="$1"
     shift
+    local jaillock
+    local cfg
 
     echo About to run mock. >&2
     echo "I am user $(whoami)." >&2
@@ -178,6 +180,7 @@ function mocklock() {
     jaillock="$cfg".lock
 
     echo "Using mock config $cfg." >&2
+    echo "Using mock lock $jaillock." >&2
 
     flock "$jaillock" bash -c '
         rpm -q mock nosync >/dev/null 2>&1 || {
