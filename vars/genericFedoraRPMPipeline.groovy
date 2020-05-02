@@ -263,14 +263,20 @@ def autolistrpms() {
 }
 
 def automockfedorarpms(myRelease) {
+	println "In this branch we are building ${myRelease}."
+	def release = ""
+	def branch = ""
+	def stuff = ""
 	if (myRelease.indexOf(":") != -1) {
 		stuff = myRelease.split(':')
-		myRelease = stuff[0]
-		myArch = stuff[1]
+		release = stuff[0]
+		arch = stuff[1]
 	} else {
-		myArch = "x86_64"
+		release = myRelease
+		arch = "x86_64"
 	}
-	sh("set -e\n" + shellLib() + "\nautomockfedorarpms --define_build_number ${myRelease} ${myArch}")
+	println "Release detected: ${release}.  Arch detected: ${arch}."
+	sh("set -e\n" + shellLib() + "\nautomockfedorarpms --define_build_number ${release} ${arch}")
 }
 
 def automockfedorarpms_all(releases) {
