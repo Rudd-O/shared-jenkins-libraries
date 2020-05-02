@@ -265,9 +265,9 @@ def autolistrpms() {
 
 def automockfedorarpms(myRelease) {
 	println "In this branch we are building ${myRelease}."
-	def release = ""
-	def branch = ""
 	def stuff = ""
+	def release = ""
+	def arch = ""
 	if (myRelease.indexOf(":") != -1) {
 		stuff = myRelease.split(':')
 		release = stuff[0]
