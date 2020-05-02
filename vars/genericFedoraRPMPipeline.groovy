@@ -403,6 +403,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 							script {
 								funcs.dnfInstall([
 									'rpm-build',
+									'which',
 									'pypipackage-to-srpm',
 									'shyaml',
 									'python2-nose',
