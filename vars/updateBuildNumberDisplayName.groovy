@@ -26,6 +26,9 @@ def call() {
 	}
 	if (dns.size() > 0) {
 		currentBuild.displayName = "#" + env.BUILD_NUMBER + ": " + dns.join(" / ")
+		if (env.RELEASE != null && env.RELEASE != "") {
+                    currentBuild.displayName = currentBuild.displayName + " for " + env.RELEASE
+		}
 	}
 	if (descs.size() > 0) {
 		desc = funcs.wrapUl(descs.join("\n"))
