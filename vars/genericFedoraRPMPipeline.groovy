@@ -168,6 +168,8 @@ function mocklock() {
     cfg=$( config_mocklock "$release" "$arch" )
     jaillock="$cfg".lock
 
+    echo "Using mock config $cfg." >&2
+
     flock "$jaillock" bash -c '
         rpm -q mock nosync >/dev/null 2>&1 || {
             echo Initializing local packages mock nosync.
