@@ -406,6 +406,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python3-PyYAML',
 									'python3-pyxdg', // Some tests need this.
 									'golang',
+									'wget',
 								])
 								if (srpm_deps != null) {
 									echo "Installing additional dependencies ${srpm_deps}."
