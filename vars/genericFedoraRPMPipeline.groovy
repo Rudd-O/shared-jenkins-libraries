@@ -417,6 +417,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python2-pyyaml',
 									'python3-PyYAML',
 									'python3-pyxdg', // Some tests need this.
+									'gobject-introspection', // Some tests need this.
 									'golang',
 									'make',
 									'autoconf',
