@@ -233,6 +233,7 @@ function mockfedorarpms() {
 }
 
 function automockfedorarpms() {
+  echo "automockfedorarpms args: $@" >&2
   for file in src/*.src.rpm ; do
     test -f "$file" || { echo "$file is not a source RPM" >&2 ; return 19 ; }
   done
