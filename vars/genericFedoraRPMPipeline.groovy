@@ -38,13 +38,16 @@ function config_mocklock() {
     local release="$1"
     local arch="$2"
 
-    test -d "$WORKSPACE" || {
-        echo '$WORKSPACE' "$WORKSPACE" does not exist >&2
-        return 4
-    }
+    local basebase
+    if test -n "$MOCK_CACHEDIR" ; then
+        basebase="$MOCK_CACHEDIR"
+    else
+        basebase="$WORKSPACE/mock"
+    fi
 
-    local basedir="$WORKSPACE/mock"
+    local basedir="$basebase"
     mkdir -p "$basedir"
+
     local jail="fedora-$release-$arch-generic"
     local cfg="$basedir/$jail.cfg"
     local root="$basedir/jail/$jail"
