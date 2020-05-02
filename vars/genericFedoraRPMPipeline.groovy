@@ -277,6 +277,7 @@ def automockfedorarpms(myRelease) {
 		arch = "x86_64"
 	}
 	println "Release detected: ${release}.  Arch detected: ${arch}."
+	sh("echo Invoking automockfedorarpms --define_build_number ${release} ${arch} >&2")
 	sh("set -e\n" + shellLib() + "\nautomockfedorarpms --define_build_number ${release} ${arch}")
 }
 
