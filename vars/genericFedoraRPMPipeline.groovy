@@ -38,7 +38,12 @@ function config_mocklock() {
     local release="$1"
     local arch="$2"
 
-    local basedir=$WORKSPACE/mock
+    test -d "$WORKSPACE" || {
+        echo '$WORKSPACE' "$WORKSPACE" does not exist >&2
+        return 4
+    }
+
+    local basedir="$WORKSPACE/mock"
     mkdir -p "$basedir"
     local jail="fedora-$release-$arch-generic"
     local cfg="$basedir/$jail.cfg"
@@ -56,6 +61,7 @@ config_opts['legal_host_arches'] = ('$arch',)
 # python-setuptools was installed to allow for python builds
 config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools python3-setuptools /usr/bin/python'
 config_opts['extra_chroot_dirs'] = ['/run/lock']
+config_opts['isolation'] = 'simple'
 config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
 config_opts['releasever'] = '$release'
 config_opts['nosync'] = True
