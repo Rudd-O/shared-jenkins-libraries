@@ -603,7 +603,10 @@ function mocklock() {
 
 def mock(String release, String arch, ArrayList args) {
     cmd = mockShellLib() + "mocklock " + release + " " + arch + " " + args.collect{ shellQuote(it) }.join(" ")
-    sh cmd
+    sh(
+        script: cmd,
+        label: "Run mock ${release} ${arch}"
+    )
 }
 
 def automockfedorarpms(String myRelease) {
