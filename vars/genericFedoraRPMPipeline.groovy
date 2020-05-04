@@ -407,18 +407,10 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'which',
 									'pypipackage-to-srpm',
 									'shyaml',
-									'python2-nose',
 									'python3-nose',
-									'python2',
 									'python3',
-									'python2-setuptools',
 									'python3-setuptools',
-									'python3-setuptools_scm',
-									'python3-setuptools_scm_git_archive',
-									'python2-pyyaml',
 									'python3-PyYAML',
-									'python3-pyxdg', // Some tests need this.
-									'gobject-introspection', // Some tests need this.
 									'golang',
 									'make',
 									'autoconf',
