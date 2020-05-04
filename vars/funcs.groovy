@@ -602,10 +602,12 @@ function mocklock() {
 }
 
 def mock(String release, String arch, ArrayList args) {
-    cmd = mockShellLib() + "mocklock " + release + " " + arch + " " + args.collect{ shellQuote(it) }.join(" ")
+    def quotedargs = args.collect{ shellQuote(it) }.join(" ")
+    def mocklock = "mocklock " + release + " " + arch + " " + quotedargs
+    def cmd = mockShellLib() + mocklock
     sh(
         script: cmd,
-        label: "Run mock ${release} ${arch}"
+        label: "Run mocklock ${release} ${arch}"
     )
 }
 
@@ -632,20 +634,22 @@ def automockfedorarpms(String myRelease) {
         returnStdout: true,
         label: "Check we have source RPMs."
     ).trim().split("\n")
+    println "We have found the following source RPMs: " + detected.join(", ")
     dir("out/${release}") {
         sh(
             script: 'echo Created out directory $PWD. >&2',
             label: "Create out directory for this release."
         )
     }
-    mock(
-        release, arch,
-        [
-            "--unpriv",
-            "--verbose",
-            "--define=build_number ${BUILD_NUMBER}",
-            "--resultdir=out/${release}",
-            "--rebuild"
-        ] + detected
-    )
+    ArrayList args = [
+        "--unpriv",
+        "--verbose",
+        "--define=build_number ${BUILD_NUMBER}",
+        "--resultdir=out/${release}",
+        "--rebuild"
+    ]
+    for (srpm in detected) {
+        args << srpm
+    }
+    mock(release, arch, args)
 }
