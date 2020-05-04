@@ -634,7 +634,7 @@ def automockfedorarpms(String myRelease) {
     ).trim().split("\n")
     dir("out/${release}") {
         sh(
-            script 'echo Created out directory $PWD. >&2',
+            script: 'echo Created out directory $PWD. >&2',
             label: "Create out directory for this release."
         )
     }
