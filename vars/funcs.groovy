@@ -629,7 +629,8 @@ def automockfedorarpms(String myRelease) {
             echo "$file"
         done
         ''',
-        returnStdout: true
+        returnStdout: true,
+        label: "Check we have source RPMs."
     ).trim().split("\n")
     dir("out/${release}") {
         sh 'echo Created out directory $PWD. >&2'
