@@ -633,7 +633,10 @@ def automockfedorarpms(String myRelease) {
         label: "Check we have source RPMs."
     ).trim().split("\n")
     dir("out/${release}") {
-        sh 'echo Created out directory $PWD. >&2'
+        sh(
+            script 'echo Created out directory $PWD. >&2',
+            label: "Create out directory for this release."
+        )
     }
     mock(
         release, arch,
