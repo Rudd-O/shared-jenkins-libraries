@@ -12,9 +12,8 @@ def f(addProvides=null) {
 }
 
 def call(addProvides=null) {
-    return {
-        script {
-            f(addProvides)
-        }
+    script {
+        f(addProvides)
     }
+    println "Done with cpanspecSrpm"
 }
