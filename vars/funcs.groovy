@@ -401,3 +401,244 @@ def downloadUrl(url, filename, sha256sum, outdir) {
         """
         return filename
 }
+
+def mockShellLib() {
+    return '''
+set +x >/dev/null 2>&1
+
+function multail() {
+  local ppid
+  local pids
+  local basename
+  local pidfile
+  local sedpid
+  local tailpid
+  pids=
+  ppid="$1"
+  shift
+  while [ "$1" != "" ] ; do
+    basename=`basename "$1"`
+    pidfile=`mktemp`
+    ( tail -F "$1" --pid="$ppid" & echo $! 1>&3 ) 3> "$pidfile" | sed -u "s/^/$basename: /" >&2 &
+    sedpid=$!
+    tailpid=$(<"$pidfile")
+    rm -f "$pidfile"
+    pids="$tailpid $sedpid $pids"
+    shift
+  done
+  echo "$pids"
+}
+
+function suspendshellverbose() {
+    local oldopts
+    local retval
+    oldopts=$( echo $- | grep x )
+    set +x
+    retval=0
+    "$@" || retval=$?
+    if [ -n "$oldopts" ]; then set -x ; else set +x ; fi
+    return $retval
+}
+
+function config_mocklock() {
+    local release="$1"
+    local arch="$2"
+
+    local basebase
+    if test -n "$MOCK_CACHEDIR" ; then
+        basebase="$MOCK_CACHEDIR"
+    else
+        basebase="$WORKSPACE/mock"
+    fi
+
+    local basedir="$basebase"
+    mkdir -p "$basedir"
+
+    local jail="fedora-$release-$arch-generic"
+    local cfg="$basedir/$jail.cfg"
+    local root="$basedir/jail/$jail"
+    local cache_topdir="$basedir"/cache
+
+    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
+    cat > "$tmpcfg" <<EOF
+config_opts['basedir'] = '$basedir'
+config_opts['cache_topdir'] = '$cache_topdir'
+config_opts['root'] = '$root'
+config_opts['target_arch'] = '$arch'
+config_opts['legal_host_arches'] = ('$arch',)
+# rpmdevtools was installed to support rpmdev-bumpspec below
+# python-setuptools was installed to allow for python builds
+config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools python3-setuptools /usr/bin/python'
+config_opts['extra_chroot_dirs'] = ['/run/lock']
+config_opts['isolation'] = 'nspawn'
+config_opts['rpmbuild_networking'] = False
+config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
+config_opts['releasever'] = '$release'
+config_opts['nosync'] = True
+config_opts['nosync_force'] = True
+config_opts['plugin_conf']['ccache_enable'] = False
+config_opts['use_bootstrap'] = False
+config_opts['cleanup_on_success'] = False
+config_opts['cleanup_on_failure'] = False
+config_opts['package_manager'] = 'dnf'
+config_opts['rpmbuild_networking'] = False
+config_opts['plugin_conf']['root_cache_enable'] = True
+
+config_opts['yum.conf'] = """
+[main]
+keepcache=1
+cachedir=/var/cache/yum
+debuglevel=9
+reposdir=/dev/null
+logfile=/var/log/yum.log
+retries=20
+obsoletes=1
+gpgcheck=1
+assumeyes=1
+syslog_ident=mock
+syslog_device=
+install_weak_deps=0
+metadata_expire=0
+mdpolicy=group:primary
+best=1
+
+# repos
+
+[fedora]
+name=fedora
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-\\$releasever&arch=\\$basearch
+failovermethod=priority
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-\\$releasever-primary
+gpgcheck=1
+
+[updates]
+name=updates
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f\\$releasever&arch=\\$basearch
+failovermethod=priority
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-\\$releasever-primary
+gpgcheck=1
+
+[rpmfusion-free]
+name=RPM Fusion for Fedora \\$releasever - Free
+#baseurl=http://download1.rpmfusion.org/free/fedora/releases/\\$releasever/Everything/\\$basearch/os/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-\\$releasever&arch=\\$basearch
+enabled=1
+metadata_expire=7d
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
+
+[rpmfusion-free-updates]
+name=RPM Fusion for Fedora \\$releasever - Free - Updates
+#baseurl=http://download1.rpmfusion.org/free/fedora/updates/\\$releasever/\\$basearch/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-updates-released-\\$releasever&arch=\\$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
+
+[rpmfusion-nonfree]
+name=RPM Fusion for Fedora \\$releasever - Nonfree
+#baseurl=http://download1.rpmfusion.org/nonfree/fedora/releases/\\$releasever/Everything/\\$basearch/os/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-\\$releasever&arch=\\$basearch
+enabled=1
+metadata_expire=7d
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
+
+[rpmfusion-nonfree-updates]
+name=RPM Fusion for Fedora \\$releasever - Nonfree - Updates
+#baseurl=http://download1.rpmfusion.org/nonfree/fedora/updates/\\$releasever/\\$basearch/
+mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-updates-released-\\$releasever&arch=\\$basearch
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
+
+[dragonfear]
+name=dragonfear
+baseurl=http://dnf-updates.dragonfear/fc\\$releasever/
+gpgcheck=0
+metadata_expire=30
+"""
+EOF
+
+    if cmp "$cfg" "$tmpcfg" >&2 ; then
+        rm -f "$tmpcfg"
+    else
+        mv -f "$tmpcfg" "$cfg"
+        echo Configured "$cfg" as follows >&2
+        echo =============================== >&2
+        cat "$cfg" >&2
+        echo =============================== >&2
+    fi
+    echo "$cfg"
+}
+
+function mocklock() {
+    local release="$1"
+    shift
+    local arch="$1"
+    shift
+    local cfg
+
+    echo About to run mock. >&2
+    echo "I am user $(whoami)." >&2
+    echo "We will be using release $release and arch $arch." >&2
+    echo "Arguments for mock: $@" >&2
+
+    cfg=$( config_mocklock "$release" "$arch" )
+
+    echo "Using mock config $cfg." >&2
+
+    local ret=60
+    while [ "$ret" == "60" ] ; do
+        /usr/bin/mock -r "$cfg" "$@" < /dev/null && ret=0 || ret=$?
+        if [ "$ret" == "60" ] ; then
+            echo "Sleeping for 15 seconds" >&2
+            sleep 15
+        fi
+    done
+    return "$ret"
+}
+'''
+}
+
+def mock(String release, String arch, ArrayList args) {
+    cmd = mockShellLib() + "mocklock " + release + " " + arch + " " + args.collect{ shellQuote(it) }.join(" ")
+    sh cmd
+}
+
+def automockfedorarpms(String myRelease) {
+    def stuff = ""
+    def release = ""
+    def arch = ""
+    if (myRelease.indexOf(":") != -1) {
+            stuff = myRelease.split(':')
+            release = stuff[0]
+            arch = stuff[1]
+    } else {
+            release = myRelease
+            arch = "x86_64"
+    }
+    println "Release detected: ${release}.  Arch detected: ${arch}."
+    def detected = sh(
+        script: '''#!/bin/sh -e
+        for file in src/*.src.rpm ; do
+            test -f "$file" || { echo "$file is not a source RPM" >&2 ; exit 19 ; }
+            echo "$file"
+        done
+        ''',
+        returnStdout: true
+    ).trim().split("\n")
+    dir("out/${release}") {
+        sh 'echo Created out directory $PWD. >&2'
+    }
+    mock(
+        release, arch,
+        [
+            "--unpriv",
+            "--verbose",
+            "--define=build_number ${BUILD_NUMBER}",
+            "--resultdir=out/${release}",
+            "--rebuild"
+        ] + detected
+    )
+}
