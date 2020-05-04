@@ -64,7 +64,8 @@ config_opts['legal_host_arches'] = ('$arch',)
 # python-setuptools was installed to allow for python builds
 config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools python3-setuptools /usr/bin/python'
 config_opts['extra_chroot_dirs'] = ['/run/lock']
-config_opts['isolation'] = 'simple'
+config_opts['isolation'] = 'nspawn'
+config_opts['rpmbuild_networking'] = False
 config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
 config_opts['releasever'] = '$release'
 config_opts['nosync'] = True
@@ -153,7 +154,7 @@ metadata_expire=30
 """
 EOF
 
-    if cmp "$cfg" "$tmpcfg" ; then
+    if cmp "$cfg" "$tmpcfg" >&2 ; then
         rm -f "$tmpcfg"
     else
         mv -f "$tmpcfg" "$cfg"
@@ -170,19 +171,24 @@ function mocklock() {
     shift
     local arch="$1"
     shift
-    local jaillock
     local cfg
 
     echo About to run mock. >&2
     echo "I am user $(whoami)." >&2
 
     cfg=$( config_mocklock "$release" "$arch" )
-    jaillock="$cfg".lock
 
     echo "Using mock config $cfg." >&2
-    echo "Using mock lock $jaillock." >&2
 
-    flock "$jaillock" /usr/bin/mock -r "$cfg" "$@"
+    local ret=60
+    while [ "$ret" == "60" ] ; do
+        /usr/bin/mock -r "$cfg" "$@" < /dev/null && ret=0 || ret=$?
+        if [ "$ret" == "60" ] ; then
+            echo "Sleeping for 15 seconds" >&2
+            sleep 15
+        fi
+    done
+    return "$ret"
 }
 
 function mockfedorarpms() {
