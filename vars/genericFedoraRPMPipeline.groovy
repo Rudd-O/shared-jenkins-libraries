@@ -182,13 +182,6 @@ function mocklock() {
     echo "Using mock config $cfg." >&2
     echo "Using mock lock $jaillock." >&2
 
-    flock "$jaillock" bash -c '
-        rpm -q mock nosync >/dev/null 2>&1 || {
-            echo Initializing local packages mock nosync.
-            sudo dnf install -qy mock nosync || exit $?
-        }
-    ' >&2
-
     flock "$jaillock" /usr/bin/mock -r "$cfg" "$@"
 }
 
@@ -423,6 +416,8 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'autoconf',
 									'automake',
 									'wget',
+									'mock',
+									'nosync',
 								])
 								if (srpm_deps != null) {
 									echo "Installing additional dependencies ${srpm_deps}."
