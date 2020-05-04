@@ -207,7 +207,7 @@ function mockfedorarpms() {
      shift
   fi
 
-  relpath=`python -c 'import os, sys ; print os.path.relpath(sys.argv[1])' "$3"`
+  relpath=$(python3 -c 'import os, sys ; print(os.path.relpath(sys.argv[1]))' "$3")
 
   release="$1"
   target="$2"
