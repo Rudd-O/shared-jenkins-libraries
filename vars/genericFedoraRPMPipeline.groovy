@@ -284,18 +284,20 @@ def automockfedorarpms(myRelease) {
 }
 
 def automockfedorarpms_all(releases) {
-	funcs.combo({
-		def myRelease = it[0]
-			return {
-				stage("RPMs for Fedora ${myRelease}") {
-					script {
-						automockfedorarpms(myRelease)
-					}
-				}
-			}
-		}, [
-			releases,
-		])
+    def parallelized = funcs.combo(
+        {
+            return {
+                stage("RPMs for Fedora ${it[0]}") {
+                    script {
+                        automockfedorarpms(it[0])
+                    }
+                }
+            }
+        },
+        [releases]
+    )
+    parallelized.failFast = true
+    return parallelized
 }
 
 def autouploadfedorarpms(myRelease) {
