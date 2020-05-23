@@ -327,7 +327,7 @@ def srpmFromSpecAndSourceTree(srcdir, outdir) {
 		println "Retrieving specfiles..."
 		filename = sh(
 			returnStdout: true,
-			script: "find src -name '*.spec' | head -1"
+			script: "find src/ -name '*.spec' | head -1"
 		).trim()
 		if (filename == "") {
 			error('Could not find any specfile in src/ -- failing build.')
@@ -351,6 +351,27 @@ def srpmFromSpecAndSourceTree(srcdir, outdir) {
 		}
 		// This makes the source RPM.
 		sh "rpmbuild --define \"_srcrpmdir ${outdir}\" --define \"_sourcedir ${srcdir}/..\" -bs ${filename}"
+	}
+}
+
+def srpmFromSpecAndDirContainingSpecSources(srcdir, outdir) {
+	// Assumes the srcdir contains the sources that do not exist
+	// in src/ -- then merges the sources from src/ into srcdir/
+	// srcdir is the directory tree that contains the source files not already available in src/.
+	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockfedorarpms finds it.
+	return {
+		filename = sh(
+			returnStdout: true,
+			script: "find src/ -name '*.spec' | head -1"
+		).trim()
+		for (i in getrpmsources(filename)) {
+			sh "if test -f src/${i} ; then cp src/${i} ${srcdir}/ ; fi"
+		}
+		for (i in getrpmpatches(filename)) {
+			sh "if test -f src/${i} ; then cp src/${i} ${srcdir}/ ; fi"
+		}
+		// This makes the source RPM.
+		sh "rpmbuild --define \"_srcrpmdir ${outdir}\" --define \"_sourcedir ${srcdir}/\" -bs ${filename}"
 	}
 }
 
@@ -404,6 +425,25 @@ def downloadUrl(url, filename, sha256sum, outdir) {
                 fi
         """
         return filename
+}
+
+def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, keyID) {
+    def urlBase = basename(dataURL)
+    def checksumBase = basename(checksumURL)
+    sh """
+    rm -f -- ${urlBase} ${checksumBase}
+    wget -c --progress=dot:giga --timeout=15 -- ${dataURL}
+    wget -c --progress=dot:giga --timeout=15 -- ${checksumURL}
+    """
+    sh """
+    GNUPGHOME=`mktemp -d /tmp/.gpg-tmp-XXXXXXX`
+    export GNUPGHOME
+    eval \$(gpg-agent --homedir "\$GNUPGHOME" --daemon)
+    trap 'rm -rf "\$GNUPGHOME"' EXIT
+    gpg2 --verbose --homedir "\$GNUPGHOME" --keyserver ${keyServer} --recv ${keyID}
+    gpg2 --verbose --homedir "\$GNUPGHOME" --verify ${checksumBase}
+    sha256sum -c ${checksumBase}
+    """
 }
 
 def mockShellLib() {
