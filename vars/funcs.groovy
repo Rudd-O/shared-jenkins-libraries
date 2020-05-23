@@ -153,6 +153,10 @@ def basename(aString) {
     return aString.split('/')[-1]
 }
 
+def dirname(aString) {
+    return aString[0..-basename(aString).size()-2]
+}
+
 def describeCause(currentBuild) {
 	def causes = currentBuild.rawBuild.getCauses()
 	def manualCause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
