@@ -427,7 +427,7 @@ def downloadUrl(url, filename, sha256sum, outdir) {
         return filename
 }
 
-def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, keyID) {
+def downloadURLWithSHA256Verification(dataURL, checksumURL) {
     def urlBase = basename(dataURL)
     def checksumBase = basename(checksumURL)
     sh """
@@ -436,13 +436,20 @@ def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, key
     wget -c --progress=dot:giga --timeout=15 -- ${checksumURL}
     """
     sh """
+    sha256sum -c --ignore-missing ${checksumBase}
+    """
+}
+
+def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, keyID) {
+    downloadURLWithSHA256Verification(dataURL, checksumURL)
+    def checksumBase = basename(checksumURL)
+    sh """
     GNUPGHOME=`mktemp -d /tmp/.gpg-tmp-XXXXXXX`
     export GNUPGHOME
     eval \$(gpg-agent --homedir "\$GNUPGHOME" --daemon)
     trap 'rm -rf "\$GNUPGHOME"' EXIT
     gpg2 --verbose --homedir "\$GNUPGHOME" --keyserver ${keyServer} --recv ${keyID}
     gpg2 --verbose --homedir "\$GNUPGHOME" --verify ${checksumBase}
-    sha256sum -c ${checksumBase}
     """
 }
 
