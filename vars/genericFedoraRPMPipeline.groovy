@@ -169,7 +169,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 												python=nosetests-2
 											fi
 											if [ $(find . -name '*_test.py' -o -name 'test_*.py' | wc -l) != 0 ] ; then
-												$python -v --with-xunit --xunit-file=../xunit.xml
+												$python --with-xunit --xunit-file=../xunit.xml
 											fi
 										fi
 										'''
