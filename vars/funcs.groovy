@@ -551,6 +551,7 @@ config_opts['releasever'] = '$release'
 config_opts['nosync'] = True
 config_opts['nosync_force'] = True
 config_opts['plugin_conf']['ccache_enable'] = False
+config_opts['plugin_conf']['generate_completion_cache_enable'] = False
 config_opts['use_bootstrap'] = False
 config_opts['cleanup_on_success'] = False
 config_opts['cleanup_on_failure'] = False
