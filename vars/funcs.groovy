@@ -581,7 +581,6 @@ best=1
 [fedora]
 name=fedora
 mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-\\$releasever&arch=\\$basearch
-failovermethod=priority
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-\\$releasever-primary
 gpgcheck=1
 
