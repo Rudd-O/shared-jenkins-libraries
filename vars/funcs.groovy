@@ -257,7 +257,15 @@ def downloadPypiPackageToSrpmSource() {
             script: 'shyaml get-value sha256sum < pypipackage-to-srpm.yaml',
             returnStdout: true
         ).trim()
+        def actualfilename = sh(
+            script: 'shyaml get-value source_filename < pypipackage-to-srpm.yaml',
+            returnStdout: true
+        ).trim()
         def basename = downloadUrl(url, null, sum, ".")
+        if (actualFilename != "") {
+            sh "mv -f ${basename} ${actualFilename}"
+            return actualFilename
+        }
         return basename
 }
 
