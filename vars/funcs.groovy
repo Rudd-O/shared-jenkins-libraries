@@ -262,9 +262,9 @@ def downloadPypiPackageToSrpmSource() {
             returnStdout: true
         ).trim()
         def basename = downloadUrl(url, null, sum, ".")
-        if (actualFilename != "") {
-            sh "mv -f ${basename} ${actualFilename}"
-            return actualFilename
+        if (actualfilename != "") {
+            sh "mv -f ${basename} ${actualfilename}"
+            return actualfilename
         }
         return basename
 }
