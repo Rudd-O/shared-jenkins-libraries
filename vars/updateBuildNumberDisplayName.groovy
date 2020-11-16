@@ -5,9 +5,10 @@ def call() {
 			do
 				if test -d "$a" && test -d "$a"/.git
 				then
-					pushd "$a" >/dev/null
+					oldpwd=$(pwd)
+					cd "$a"
 					echo -n "$a " ; git log --oneline -n 1
-					popd >/dev/null
+					cd "$oldpwd"
 				fi
 			done
 		''',

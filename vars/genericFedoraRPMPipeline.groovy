@@ -97,9 +97,10 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 								do
 									if test -d "$a" && test -d "$a"/.git
 									then
-										pushd "$a" >/dev/null
+										oldpwd=$(pwd)
+										cd "$a"
 										git rev-parse --short HEAD
-										popd >/dev/null
+										cd "$oldpwd"
 									fi
 								done
 							''',
