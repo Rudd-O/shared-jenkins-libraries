@@ -125,7 +125,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python3-nose',
 									'python3',
 									'python3-setuptools',
-									'python3-PyYAML',
+									'python3-pyyaml',
 									'golang',
 									'make',
 									'autoconf',
