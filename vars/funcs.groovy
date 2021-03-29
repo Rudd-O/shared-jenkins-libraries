@@ -522,6 +522,8 @@ function config_mocklock() {
         basebase="$MOCK_CACHEDIR"
     else
         basebase="$WORKSPACE/mock"
+        echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
+        exit 56
     fi
 
     local basedir="$basebase"
