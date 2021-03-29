@@ -727,3 +727,58 @@ def automockfedorarpms(String myRelease) {
     }
     mock(release, arch, args)
 }
+
+def repos() {
+    def jobs = []
+    jobs = sh(
+        script: 'cd /srv/git && ls -1',
+        returnStdout: true
+    )
+    splitData = jobs.tokenize("\n")
+    jobs = splitData.findAll {
+        ! (it == "post-receive" || it == "build" || it == "shared-jenkins-libraries.git" || it == "") 
+    }
+    return jobs
+}
+
+def defineJobViaDSL(job) {
+    jobDsl(
+        scriptText: """
+    multibranchPipelineJob("${job}") {
+        description "Job ${job}.  Set up by generic build code."
+        displayName "${job}"
+        branchSources {
+          git {
+            id = "${job}"
+            remote("file:///srv/git/${job}.git")
+          }
+        }
+        triggers {
+          cron("H H * * *")
+        }
+        configure { x ->
+          x / orphanedItemStrategy(class: 'com.cloudbees.hudson.plugins.folder.computed.DefaultOrphanedItemStrategy') {
+            pruneDeadBranches('true')
+            daysToKeep('-1')
+            numToKeep('-1')
+          }
+          def traits = x / sources / data / 'jenkins.branch.BranchSource' / source / traits
+          traits << 'jenkins.plugins.git.traits.BranchDiscoveryTrait' {}
+          traits << 'jenkins.plugins.git.traits.TagDiscoveryTrait' {}
+        }
+        if (!jenkins.model.Jenkins.instance.getItemByFullName("${job}")) {
+          queue("${job}")
+        }
+    }
+    """,
+        sandbox: true
+    )
+}
+
+def defineJobs() {
+    def r = repos()
+    x = r.collect{ it.substring(0, it.length() - 4) }
+    for (z in x) {
+        defineJobViaDSL(z)
+    }
+}
