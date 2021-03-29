@@ -19,8 +19,6 @@ def autouploadfedorarpms(myRelease) {
 	sh("/var/lib/jenkins/userContent/upload-deliverables out/*/*.rpm")
 }
 
-def RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
-
 def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_step = null, test_step = null) {
 	pipeline {
 
@@ -43,11 +41,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 			stage('Begin') {
 				steps {
 					script{
-						if (params.RELEASE == '') {
-							env.RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
-						} else {
-							env.RELEASE = params.RELEASE
-						}
+						env.RELEASE = params.RELEASE
 					}
 					script {
 						funcs.announceBeginning()
@@ -78,6 +72,9 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 						])
 					}
 					script {
+						if (params.RELEASE == '') {
+							env.RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
+						}
 						if (checkout_step != null) {
 							checkout_step()
 						}

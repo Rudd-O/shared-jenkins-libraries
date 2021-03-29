@@ -180,6 +180,7 @@ def loadParameter(filename, name, defaultValue) {
     GroovyShell shell = new GroovyShell()
     defaultsScript = [:]
     def paths = [
+      env.WORKSPACE + "/src/" + "build.parameters",
       env.WORKSPACE + "/" + "build.parameters",
       env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME + ".parameters",
       env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME.split("/")[0] + ".parameters",
