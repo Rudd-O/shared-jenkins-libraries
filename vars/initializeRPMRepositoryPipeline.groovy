@@ -1,4 +1,4 @@
-def RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
+def RELEASE = funcs.loadParameter('RELEASE', '30')
 
 def call() {
 	pipeline {
@@ -20,7 +20,7 @@ def call() {
 				steps {
 					script{
 						if (params.RELEASE == '') {
-							env.RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
+							env.RELEASE = funcs.loadParameter('RELEASE', '30')
 						} else {
 							env.RELEASE = params.RELEASE
 						}

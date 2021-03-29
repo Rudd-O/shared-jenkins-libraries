@@ -73,7 +73,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 					}
 					script {
 						if (params.RELEASE == '') {
-							env.RELEASE = funcs.loadParameter('parameters.groovy', 'RELEASE', '30')
+							env.RELEASE = funcs.loadParameter('RELEASE', '30')
 						}
 						if (checkout_step != null) {
 							checkout_step()
