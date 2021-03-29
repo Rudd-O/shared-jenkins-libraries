@@ -176,7 +176,7 @@ def getUpstreamProject(currentBuild) {
 	return null
 }
 
-def loadParameter(filename, name, defaultValue) {
+def loadParameter(name, defaultValue) {
     GroovyShell shell = new GroovyShell()
     defaultsScript = [:]
     def paths = [
