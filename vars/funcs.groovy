@@ -129,14 +129,14 @@ def aptEnableSrc() {
 }
 
 def announceBeginning() {
-    sh '''
-       /usr/local/bin/announce-build-result has begun
-       '''
+    sh """
+       "$JENKINS_HOME"/userContent/announce-build-result has begun || true
+       """
 }
 
 def announceEnd(status) {
     sh """
-       /usr/local/bin/announce-build-result finished with status ${status}
+       "$JENKINS_HOME"/userContent/announce-build-result finished with status ${status} || true
        """
 }
 
@@ -179,13 +179,13 @@ def getUpstreamProject(currentBuild) {
 def loadParameter(filename, name, defaultValue) {
     GroovyShell shell = new GroovyShell()
     defaultsScript = [:]
-    def path = env.JENKINS_HOME + "/jobs/" + env.JOB_NAME + "/" + "parameters.groovy"
+    def path = env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME + ".parameters"
     try {
         defaultsScript = shell.parse(new File(path)).run()
     }
     catch(IOException ex){
         println "Could not load from ${path}"
-        path = env.JENKINS_HOME + "/jobs/" + env.JOB_NAME.split("/")[0] + "/" + "parameters.groovy"
+        path = env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME.split("/")[0] + ".parameters"
         try {
             defaultsScript = shell.parse(new File(path)).run()
         }
