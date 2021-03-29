@@ -193,6 +193,8 @@ def loadParameter(name, defaultValue) {
             if (x) {
                 println "Loaded parameter ${name}=${x} from ${path}"
                 return x
+            } else {
+                println "Could not find ${name} in ${path}"
             }
         }
         catch(IOException ex){
