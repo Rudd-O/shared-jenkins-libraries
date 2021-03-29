@@ -179,25 +179,23 @@ def getUpstreamProject(currentBuild) {
 def loadParameter(filename, name, defaultValue) {
     GroovyShell shell = new GroovyShell()
     defaultsScript = [:]
-    def path = env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME + ".parameters"
-    try {
-        defaultsScript = shell.parse(new File(path)).run()
-    }
-    catch(IOException ex){
-        println "Could not load from ${path}"
-        path = env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME.split("/")[0] + ".parameters"
+    def paths = [
+      env.WORKSPACE + "/" + "build.parameters",
+      env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME + ".parameters",
+      env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME.split("/")[0] + ".parameters",
+    ]
+    for (path in paths) {
         try {
             defaultsScript = shell.parse(new File(path)).run()
+            x = defaultsScript.find{ it.key == name }?.value
+            if (x) {
+                println "Loaded parameter ${name}=${x} from ${path}"
+                return x
+            }
         }
-        catch(IOException ex2) {
-            println "Could not load from ${path} either"
-	    defaultsScript = [:]
+        catch(IOException ex){
+            println "Could not load from ${path}"
         }
-    }
-    x = defaultsScript.find{ it.key == name }?.value
-    if (x) {
-        println "Loaded parameter ${name}=${x} from ${path}"
-        return x
     }
     println "Could not find parameter ${name}, returning default ${defaultValue}"
     return defaultValue
