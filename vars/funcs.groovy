@@ -479,7 +479,7 @@ def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, key
 
 def mockShellLib() {
     return '''
-set +x >/dev/null 2>&1
+# set +x >/dev/null 2>&1
 
 function multail() {
   local ppid
@@ -502,17 +502,6 @@ function multail() {
     shift
   done
   echo "$pids"
-}
-
-function suspendshellverbose() {
-    local oldopts
-    local retval
-    oldopts=$( echo $- | grep x )
-    set +x
-    retval=0
-    "$@" || retval=$?
-    if [ -n "$oldopts" ]; then set -x ; else set +x ; fi
-    return $retval
 }
 
 function config_mocklock() {
