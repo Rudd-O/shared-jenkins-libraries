@@ -31,6 +31,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 		options {
 			skipDefaultCheckout()
 			buildDiscarder(logRotator(numToKeepStr: '50', artifactNumToKeepStr: '1'))
+			copyArtifactPermission('zfs-fedora-installer')
 		}
 
 		parameters {
