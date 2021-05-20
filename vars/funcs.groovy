@@ -176,6 +176,13 @@ def getUpstreamProject(currentBuild) {
 	return null
 }
 
+def getUpstreamBuild(currentBuild) {
+	if (isUpstreamCause(currentBuild)) {
+		return currentBuild.rawBuild.getCause(hudson.model.Cause$UpstreamCause).upstreamBuild
+	}
+	return null
+}
+
 def loadParameter(name, defaultValue) {
     GroovyShell shell = new GroovyShell()
     defaultsScript = [:]
