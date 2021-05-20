@@ -668,13 +668,14 @@ function mocklock() {
 '''
 }
 
-def mock(String release, String arch, ArrayList args) {
-    for (arg in args) {
-        def mocklock = "mocklock " + release + " " + arch + " " + shellQuote(arg)
+def mock(String release, String arch, ArrayList args, ArrayList srpms) {
+    def quotedargs = args.collect{ shellQuote(it) }.join(" ")
+    for (srpm in srpms) {
+        def mocklock = "mocklock " + release + " " + arch + " " + quotedargs + " " + shellQuote(srpm)
         def cmd = mockShellLib() + mocklock
         sh(
             script: cmd,
-            label: "Run mocklock ${release} for ${arg} on ${arch}"
+            label: "Run mocklock ${release} for ${srpm} on ${arch}"
         )
     }
 }
@@ -716,10 +717,7 @@ def automockfedorarpms(String myRelease) {
         "--resultdir=out/${release}",
         "--rebuild"
     ]
-    for (srpm in detected) {
-        args << srpm
-    }
-    mock(release, arch, args)
+    mock(release, arch, args, detected)
 }
 
 def repos() {
