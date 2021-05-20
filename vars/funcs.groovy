@@ -717,7 +717,11 @@ def automockfedorarpms(String myRelease) {
         "--resultdir=out/${release}",
         "--rebuild"
     ]
-    mock(release, arch, args, detected)
+    ArrayList srpms = []
+    for (d in detected) {
+        srpms << d
+    }
+    mock(release, arch, args, srpms)
 }
 
 def repos() {
