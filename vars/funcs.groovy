@@ -669,13 +669,14 @@ function mocklock() {
 }
 
 def mock(String release, String arch, ArrayList args) {
-    def quotedargs = args.collect{ shellQuote(it) }.join(" ")
-    def mocklock = "mocklock " + release + " " + arch + " " + quotedargs
-    def cmd = mockShellLib() + mocklock
-    sh(
-        script: cmd,
-        label: "Run mocklock ${release} ${arch}"
-    )
+    for (arg in args) {
+        def mocklock = "mocklock " + release + " " + arch + " " + shellQuote(arg)
+        def cmd = mockShellLib() + mocklock
+        sh(
+            script: cmd,
+            label: "Run mocklock ${release} for ${arg} on ${arch}"
+        )
+    }
 }
 
 def automockfedorarpms(String myRelease) {
