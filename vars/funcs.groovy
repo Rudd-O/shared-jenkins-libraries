@@ -253,20 +253,29 @@ def downloadPypiPackageToSrpmSource() {
             script: 'shyaml get-value url < pypipackage-to-srpm.yaml',
             returnStdout: true
         ).trim()
-        def sum = sh(
-            script: 'shyaml get-value sha256sum < pypipackage-to-srpm.yaml',
-            returnStdout: true
-        ).trim()
-        def actualfilename = sh(
-            script: 'shyaml get-value source_filename < pypipackage-to-srpm.yaml || true',
-            returnStdout: true
-        ).trim()
-        def basename = downloadUrl(url, null, sum, ".")
-        if (actualfilename != "" && actualfilename != basename) {
-            sh "mv -f ${basename} ${actualfilename}"
-            return actualfilename
+        if url.startsWith("git+") {
+            def basename = sh(
+                script: 'pip download --no-input --no-binary=:all: --exists-action=w --no-deps ' + shellQuote(url),
+                returnStdout: true
+            )
+            def splitbasename = basename.split("\n")
+            return splitbasename[-3]
+        } else {
+            def sum = sh(
+                script: 'shyaml get-value sha256sum < pypipackage-to-srpm.yaml',
+                returnStdout: true
+            ).trim()
+            def actualfilename = sh(
+                script: 'shyaml get-value source_filename < pypipackage-to-srpm.yaml || true',
+                returnStdout: true
+            ).trim()
+            def basename = downloadUrl(url, null, sum, ".")
+            if (actualfilename != "" && actualfilename != basename) {
+                sh "mv -f ${basename} ${actualfilename}"
+                return actualfilename
+            }
+            return basename
         }
-        return basename
 }
 
 def buildDownloadedPypiPackage(basename, opts="") {
