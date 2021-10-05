@@ -261,7 +261,8 @@ def downloadPypiPackageToSrpmSource() {
             def splitbasename = basename.split("\n")
             basename = splitbasename[-2]
             basename = basename.split("/")[1]
-            return basename
+            sh 'rm -rf sdir && unzip -o ' + shellQuote(basename) + ' && cd sdir/* && python3 sdist && mv dist/* ../..'
+            return basename.substring(0, basename.length()-4) + '.tar.gz'
         } else {
             def sum = sh(
                 script: 'shyaml get-value sha256sum < pypipackage-to-srpm.yaml',
