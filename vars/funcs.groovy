@@ -261,7 +261,7 @@ def downloadPypiPackageToSrpmSource() {
             def splitbasename = basename.split("\n")
             basename = splitbasename[-2]
             basename = basename.split("/")[1]
-            sh 'rm -rf sdir && unzip -o ' + shellQuote(basename) + ' && cd sdir/* && python3 sdist && mv dist/* ../..'
+            sh 'rm -rf sdir && unzip -d sdir -o ' + shellQuote(basename) + ' && cd sdir/* && python3 sdist && mv dist/* ../..'
             return basename.substring(0, basename.length()-4) + '.tar.gz'
         } else {
             def sum = sh(
