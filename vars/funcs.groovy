@@ -259,7 +259,9 @@ def downloadPypiPackageToSrpmSource() {
                 returnStdout: true
             )
             def splitbasename = basename.split("\n")
-            return splitbasename[-3]
+            basename = splitbasename[-2]
+            basename = basename.split("/")[1]
+            return basename
         } else {
             def sum = sh(
                 script: 'shyaml get-value sha256sum < pypipackage-to-srpm.yaml',
