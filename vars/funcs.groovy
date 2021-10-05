@@ -253,7 +253,7 @@ def downloadPypiPackageToSrpmSource() {
             script: 'shyaml get-value url < pypipackage-to-srpm.yaml',
             returnStdout: true
         ).trim()
-        if url.startsWith("git+") {
+        if (url.startsWith("git+")) {
             def basename = sh(
                 script: 'pip download --no-input --no-binary=:all: --exists-action=w --no-deps ' + shellQuote(url),
                 returnStdout: true
