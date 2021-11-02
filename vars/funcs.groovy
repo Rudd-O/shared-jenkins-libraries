@@ -130,13 +130,13 @@ def aptEnableSrc() {
 
 def announceBeginning() {
     sh """
-       "$JENKINS_HOME"/userContent/announce-build-result has begun || true
+       "$JENKINS_HOME"/userContent/announce-build-result begun || true
        """
 }
 
 def announceEnd(status) {
     sh """
-       "$JENKINS_HOME"/userContent/announce-build-result finished with status ${status} || true
+       "$JENKINS_HOME"/userContent/announce-build-result finished ${status} || true
        """
 }
 
