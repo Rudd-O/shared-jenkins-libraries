@@ -575,6 +575,7 @@ config_opts['plugin_conf']['root_cache_opts']['age_check'] = True
 config_opts['plugin_conf']['root_cache_opts']['max_age_days'] = 30
 config_opts['plugin_conf']['root_cache_opts']['dir'] = '%(cache_topdir)s/%(root)s/root_cache/'
 config_opts['plugin_conf']['root_cache_opts']['compress_program'] = 'gzip'
+config_opts['plugin_conf']['root_cache_opts']['decompress_program'] = 'gunzip'
 config_opts['plugin_conf']['root_cache_opts']['extension'] = '.gz'
 config_opts['plugin_conf']['root_cache_opts']['exclude_dirs'] = ['./proc', './sys', './dev', './tmp/ccache', './var/cache/yum', './builddir', './build' ]
 
