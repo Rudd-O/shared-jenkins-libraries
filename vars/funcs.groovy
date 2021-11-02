@@ -589,7 +589,6 @@ mdpolicy=group:primary
 best=1
 
 # repos
-
 [fedora]
 name=fedora
 mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-\\$releasever&arch=\\$basearch
@@ -646,14 +645,22 @@ metadata_expire=30
 EOF
 
     if cmp "$cfg" "$tmpcfg" >&2 ; then
+        must_init=0
         rm -f "$tmpcfg"
     else
+        must_init=1
         mv -f "$tmpcfg" "$cfg"
         echo Configured "$cfg" as follows >&2
         echo =============================== >&2
         cat "$cfg" >&2
         echo =============================== >&2
     fi
+
+    if [ "$must_init" == "1" ] ; then
+        echo Initializing "$cfg" now >&2
+        flock "$cfg".lock /usr/bin/mock -r "$cfg" init >&2
+    fi
+
     echo "$cfg"
 }
 
