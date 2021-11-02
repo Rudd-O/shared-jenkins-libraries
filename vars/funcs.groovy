@@ -542,10 +542,12 @@ function config_mocklock() {
     local jail="fedora-$release-$arch-generic"
     local cfg="$basedir/$jail.cfg"
     local root="$basedir/jail/$jail"
+    local cache_topdir="$basedir"/cache
 
     local tmpcfg=$(mktemp "$basedir"/XXXXXX)
     cat > "$tmpcfg" <<EOF
 config_opts['basedir'] = '$basedir'
+config_opts['cache_topdir'] = '$cache_topdir'
 config_opts['root'] = '$root'
 config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
@@ -562,8 +564,8 @@ config_opts['nosync_force'] = True
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
 config_opts['use_bootstrap'] = False
-config_opts['cleanup_on_success'] = True
-config_opts['cleanup_on_failure'] = True
+config_opts['cleanup_on_success'] = False
+config_opts['cleanup_on_failure'] = False
 config_opts['package_manager'] = 'dnf'
 config_opts['rpmbuild_networking'] = False
 config_opts['plugin_conf']['root_cache_enable'] = True
@@ -674,7 +676,7 @@ function mocklock() {
     local ret=60
     while [ "$ret" == "60" ] ; do
         grep mock /etc/group >/dev/null 2>&1 || groupadd -r mock
-        flock "$cfg".lock /usr/bin/mock -r "$cfg" "$@" < /dev/null && ret=0 || ret=$?
+        flock "$cfg".lock /usr/bin/mock -N -r "$cfg" "$@" < /dev/null && ret=0 || ret=$?
         if [ "$ret" == "60" ] ; then
             echo "Sleeping for 15 seconds" >&2
             sleep 15
