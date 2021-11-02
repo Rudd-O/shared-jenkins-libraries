@@ -541,8 +541,8 @@ function config_mocklock() {
 
     local jail="fedora-$release-$arch-generic"
     local cfg="$basedir/$jail.cfg"
-    local root="$basedir/jail/$jail"
-    local cache_topdir="$basedir"/cache
+    local root="$jail"
+    local cache_topdir=cache
 
     local tmpcfg=$(mktemp "$basedir"/XXXXXX)
     cat > "$tmpcfg" <<EOF
