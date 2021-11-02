@@ -676,7 +676,7 @@ function mocklock() {
     local ret=60
     while [ "$ret" == "60" ] ; do
         grep mock /etc/group >/dev/null 2>&1 || groupadd -r mock
-        flock "$cfg".lock /usr/bin/mock -nN -r "$cfg" "$@" < /dev/null && ret=0 || ret=$?
+        flock "$cfg".lock /usr/bin/mock -r "$cfg" "$@" < /dev/null && ret=0 || ret=$?
         if [ "$ret" == "60" ] ; then
             echo "Sleeping for 15 seconds" >&2
             sleep 15
