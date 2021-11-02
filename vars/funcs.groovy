@@ -658,7 +658,7 @@ EOF
 
     if [ "$must_init" == "1" ] ; then
         echo Initializing "$cfg" now >&2
-        flock "$cfg".lock /usr/bin/mock -r "$cfg" init >&2
+        flock "$cfg".lock /usr/bin/mock -r "$cfg" --init >&2
     fi
 
     echo "$cfg"
