@@ -120,7 +120,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'which',
 									'pypipackage-to-srpm',
 									'shyaml',
-									'python3-nose',
+									'python3-pytest',
 									'python3',
 									'python3-setuptools',
 									'python3-pyyaml',
@@ -158,21 +158,9 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 										dir('src') {
 											sh '''
 											set -e
-											rm -f ../xunit.xml
 											if test -f setup.py ; then
-												relnum=$(rpm -qa 'fedora-release*' --queryformat '%{version}\n' | head -1)
-												if head -1 setup.py | grep -q python3 ; then
-													python=nosetests-3
-												elif head -1 setup.py | grep -q python2 ; then
-													python=nosetests-2
-												elif [ "$relnum" > 28 ] ; then
-													python=nosetests-3
-												else
-													python=nosetests-2
-												fi
-												if [ $(find . -name '*_test.py' -o -name 'test_*.py' | wc -l) != 0 ] ; then
-													$python --with-xunit --xunit-file=../xunit.xml
-												fi
+												rm -f ../xunit.xml
+												pytest --junit-xml=../xunit.xml -o junit_logging=all
 											fi
 											'''
 										}
