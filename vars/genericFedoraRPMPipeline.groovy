@@ -124,6 +124,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python3',
 									'python3-setuptools',
 									'python3-pyyaml',
+									'python3-mypy',
 									'golang',
 									'make',
 									'autoconf',
@@ -158,6 +159,9 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 										dir('src') {
 											sh '''
 											set -e
+											if test -f mypy.ini ; then
+												MYPYPATH=lib:src mypy -p $(python3 setup.py --name)
+											fi
 											if test -f setup.py ; then
 												rm -f ../xunit.xml
 												pytest --junit-xml=../xunit.xml -o junit_logging=all
