@@ -813,9 +813,3 @@ def defineJobs() {
         defineJobViaDSL(z)
     }
 }
-
-def pushImage(imageTag) {
-	def server = "docker.dragonfear:80"
-	env.BUILD_REGISTRY_SOURCES = '{"insecureRegistries": ["' + server + '"]}'
-	sh 'buildah push ${imageTag} docker://${server}/${imageTag}'
-}

@@ -133,7 +133,7 @@ def call(build_deps = null, test_step = null) {
 									println "Discovered tags: ${tags}"
 								}
 								for (tag in tags) {
-									funcs.pushImage(tag)
+									pushImage tag
 								}
 							}
 						}
