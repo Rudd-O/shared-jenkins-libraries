@@ -114,7 +114,7 @@ def call(build_deps = null, test_step = null) {
 							dir('src') {
 								script {
 									def tags = sh(
-										script: "IMAGE_BRANCH=$BRANCH_NAME make -s docker-tags",
+										script: "make -s docker-tags IMAGE_BRANCH=$BRANCH_NAME",
 										returnStdout: true
 									).trim().split("(\n| )")
 									println "Discovered tags: ${tags}"
