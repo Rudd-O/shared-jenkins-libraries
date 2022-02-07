@@ -9,10 +9,11 @@ def call(String imageTag) {
 			withEnv(["BUILD_REGISTRY_SOURCES=${regsources}"]) {
 				sh 'env'
 				sh '''
-				buildah login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" "$DOCKER_SERVER"
-				buildah push "$imagetag" "docker://$DOCKER_SERVER/$imagetag"
+				buildah login --tls-verify=false -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" "$DOCKER_SERVER"
+				buildah push --tls-verify=false "$imagetag" "docker://$DOCKER_SERVER/$imagetag"
 				'''
 			}
 		}
+		sh 'rm -f .regauth'
 	}
 }
