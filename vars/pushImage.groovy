@@ -1,6 +1,6 @@
 def call(String imageTag) {
 	// """Push docker image to server."""
-	withEnv("REGISTRY_AUTH_FILE=.regauth", "imagetag=${imageTag}"]) {
+	withEnv(["REGISTRY_AUTH_FILE=.regauth", "imagetag=${imageTag}"]) {
 		withCredentials([
 			usernamePassword(credentialsId: 'docker-auth', usernameVariable: 'docker_username', passwordVariable: 'docker_password'),
 			string(credentialsId: 'docker-server', variable: 'docker_server'),
