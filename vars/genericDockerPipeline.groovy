@@ -93,19 +93,21 @@ def call(build_deps = null, test_step = null) {
 					}
 					stage('Build') {
 						steps {
-							dir('src') {
-								sh 'BUILDAH_ISOLATION=rootless make docker IMAGE_BRANCH=$BRANCH_NAME'
-								tags = sh(
-									script: "make -s docker-tags IMAGE_BRANCH=$BRANCH_NAME",
-									returnStdout: true
-								).trim()
-								if (tags.indexOf("-dirty") != -1) {
-									println "No dirty containers allowed (${tags})."
-									sh "git status"
-									sh "exit 1"
+							script {
+								dir('src') {
+									sh 'BUILDAH_ISOLATION=rootless make docker IMAGE_BRANCH=$BRANCH_NAME'
+									tags = sh(
+										script: "make -s docker-tags IMAGE_BRANCH=$BRANCH_NAME",
+										returnStdout: true
+									).trim()
+									if (tags.indexOf("-dirty") != -1) {
+										println "No dirty containers allowed (${tags})."
+										sh "git status"
+										sh "exit 1"
+									}
+									env.DOCKER_TAGS = tags
+									println "Discovered tags: ${tags}"
 								}
-								env.DOCKER_TAGS = tags
-								println "Discovered tags: ${tags}"
 							}
 						}
 					}
