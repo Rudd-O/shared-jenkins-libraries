@@ -109,6 +109,13 @@ def call(build_deps = null, test_step = null) {
 							}
 						}
 					}
+					stage('Docker build') {
+						steps {
+							dir('src') {
+								sh 'BUILDAH_ISOLATION=rootless make docker IMAGE_BRANCH=$BRANCH_NAME'
+							}
+						}
+					}
 					stage('Docker tags') {
 						steps {
 							dir('src') {
@@ -119,13 +126,6 @@ def call(build_deps = null, test_step = null) {
 									).trim().split("(\n| )")
 									println "Discovered tags: ${tags}"
 								}
-							}
-						}
-					}
-					stage('Docker build') {
-						steps {
-							dir('src') {
-								sh 'BUILDAH_ISOLATION=rootless make docker IMAGE_BRANCH=$BRANCH_NAME'
 							}
 						}
 					}
