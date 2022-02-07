@@ -125,7 +125,7 @@ def call(build_deps = null, test_step = null) {
 					stage('Docker build') {
 						steps {
 							dir('src') {
-								sh 'IMAGE_BRANCH=$BRANCH_NAME BUILDAH_ISOLATION=rootless make docker'
+								sh 'BUILDAH_ISOLATION=rootless make docker IMAGE_BRANCH=$BRANCH_NAME'
 							}
 						}
 					}
