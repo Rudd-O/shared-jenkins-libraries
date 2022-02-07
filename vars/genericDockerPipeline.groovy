@@ -116,15 +116,24 @@ def call(build_deps = null, test_step = null) {
 							}
 						}
 					}
-					stage('Docker tags') {
+					stage('Docker push') {
 						steps {
-							dir('src') {
-								script {
-									def tags = sh(
+							script {
+								def tags = ""
+								dir('src') {
+									tags = sh(
 										script: "make -s docker-tags IMAGE_BRANCH=$BRANCH_NAME",
 										returnStdout: true
-									).trim().split("(\n| )")
+									).trim()
+									if (tags.indexOf("-dirty") != -1) {
+										println "No dirty containers allowed (${tags})."
+										sh "exit 1"
+									}
+									tags = tags.split("(\n| )")
 									println "Discovered tags: ${tags}"
+								}
+								for (tag in tags) {
+									funcs.pushImage(tag)
 								}
 							}
 						}
