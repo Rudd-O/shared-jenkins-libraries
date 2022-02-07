@@ -125,7 +125,7 @@ def call(build_deps = null, test_step = null) {
 					stage('Docker build') {
 						steps {
 							dir('src') {
-								sh 'BUILDAH_ISOLATION=rootless make docker'
+								sh 'echo BUILDAH_ISOLATION=rootless make docker'
 							}
 						}
 					}
