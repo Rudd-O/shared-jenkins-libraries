@@ -133,9 +133,7 @@ def call(build_deps = null, test_step = null) {
 									tags = tags.split("(\n| )")
 									println "Discovered tags: ${tags}"
 								}
-								for (tag in tags) {
-									pushImage(tag)
-								}
+								pushImages(tags)
 							}
 						}
 					}
