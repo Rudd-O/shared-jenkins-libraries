@@ -109,7 +109,20 @@ def call(build_deps = null, test_step = null) {
 							}
 						}
 					}
-					stage('Docker') {
+					stage('Docker tags') {
+						steps {
+							dir('src') {
+								script {
+									def tags = sh(
+										script: "make -s docker-tags",
+										returnStdout: true
+									).trim().split("(\n| )")
+									println "Discovered tags: ${tags}"
+								}
+							}
+						}
+					}
+					stage('Docker build') {
 						steps {
 							dir('src') {
 								sh 'BUILDAH_ISOLATION=rootless make docker'
