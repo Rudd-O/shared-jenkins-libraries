@@ -112,7 +112,7 @@ def call(build_deps = null, test_step = null) {
 					stage('Docker') {
 						steps {
 							dir('src') {
-								sh 'sudo make docker'
+								sh 'BUILDAH_ISOLATION=rootless make docker'
 							}
 						}
 					}
