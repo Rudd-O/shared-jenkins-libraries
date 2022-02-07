@@ -114,7 +114,7 @@ def call(build_deps = null, test_step = null) {
 							dir('src') {
 								script {
 									def tags = sh(
-										script: "make -s docker-tags",
+										script: "IMAGE_BRANCH=$BRANCH_NAME make -s docker-tags",
 										returnStdout: true
 									).trim().split("(\n| )")
 									println "Discovered tags: ${tags}"
@@ -125,7 +125,7 @@ def call(build_deps = null, test_step = null) {
 					stage('Docker build') {
 						steps {
 							dir('src') {
-								sh 'echo BUILDAH_ISOLATION=rootless make docker'
+								sh 'IMAGE_BRANCH=$BRANCH_NAME BUILDAH_ISOLATION=rootless make docker'
 							}
 						}
 					}
