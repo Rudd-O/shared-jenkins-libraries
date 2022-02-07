@@ -127,6 +127,7 @@ def call(build_deps = null, test_step = null) {
 									).trim()
 									if (tags.indexOf("-dirty") != -1) {
 										println "No dirty containers allowed (${tags})."
+										sh "git status"
 										sh "exit 1"
 									}
 									tags = tags.split("(\n| )")
