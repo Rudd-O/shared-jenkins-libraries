@@ -112,7 +112,7 @@ def call(build_deps = null, test_step = null) {
 					stage('Docker') {
 						steps {
 							dir('src') {
-								sh 'make docker'
+								sh 'sudo make docker'
 							}
 						}
 					}
