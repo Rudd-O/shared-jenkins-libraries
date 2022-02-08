@@ -7,10 +7,10 @@ def call(String[] imageTags) {
 		]) {
 			def regsources = '{"insecureRegistries": ["' + env.DOCKER_SERVER + '"]}'
 			withEnv(["BUILD_REGISTRY_SOURCES=${regsources}"]) {
-				sh 'buildah login --tls-verify=false -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" "$DOCKER_SERVER"'
+				sh 'podman login --tls-verify=false -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" "$DOCKER_SERVER"'
 				for (imageTag in imageTags) {
 					withEnv(["imagetag=${imageTag}"]) {
-						sh 'buildah push --tls-verify=false "$imagetag" "docker://$DOCKER_SERVER/$imagetag"'
+						sh 'podman push --tls-verify=false "$imagetag" "$DOCKER_SERVER/$imagetag"'
 					}
 				}
 			}
