@@ -3,10 +3,6 @@ def call(build_deps = null, test_step = null) {
 
 		agent { label 'master' }
 
-		triggers {
-			pollSCM('H H * * *')
-		}
-
 		options {
 			skipDefaultCheckout()
 			buildDiscarder(logRotator(numToKeepStr: '50', artifactNumToKeepStr: '1'))

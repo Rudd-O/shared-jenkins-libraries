@@ -24,9 +24,9 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 
 		agent { label 'master' }
 
-		triggers {
-			pollSCM('H H * * *')
-		}
+//		triggers {
+//			pollSCM('H H * * *')
+//		}
 
 		options {
 			skipDefaultCheckout()
