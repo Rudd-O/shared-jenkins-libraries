@@ -10,7 +10,7 @@ def call(String[] imageTags) {
 				sh 'podman login --tls-verify=false -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" "$DOCKER_SERVER"'
 				for (imageTag in imageTags) {
 					withEnv(["imagetag=${imageTag}"]) {
-						sh 'podman push -v2s2 --tls-verify=false "$imagetag" "$DOCKER_SERVER/$imagetag"'
+						sh 'podman push -f v2s2 --tls-verify=false "$imagetag" "$DOCKER_SERVER/$imagetag"'
 					}
 				}
 			}
