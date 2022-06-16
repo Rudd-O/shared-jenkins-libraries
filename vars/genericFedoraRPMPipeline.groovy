@@ -171,7 +171,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 												else
 													name=$(python3 setup.py --name)
 												fi
-												MYPYPATH=lib:src mypy -p $name
+												MYPYPATH=lib:src mypy -v -p $name
 											fi
 											if test -f setup.py -o -f setup.cfg ; then
 												rm -f ../xunit.xml
