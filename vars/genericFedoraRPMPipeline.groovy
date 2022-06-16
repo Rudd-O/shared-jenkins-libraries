@@ -125,6 +125,11 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python3-setuptools',
 									'python3-pyyaml',
 									'python3-mypy',
+									'python3-py2pack',
+									'python3-wheel',
+									'python3-tox-current-env',
+									'tox',
+									'poetry'
 									'golang',
 									'make',
 									'autoconf',
@@ -163,7 +168,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 											if test -f mypy.ini ; then
 												MYPYPATH=lib:src mypy -p $(python3 setup.py --name)
 											fi
-											if test -f setup.py ; then
+											if test -f setup.py -o test -f setup.cfg ; then
 												rm -f ../xunit.xml
 												pytest --junit-xml=../xunit.xml -o junit_logging=all
 											fi
@@ -191,6 +196,15 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 										// The Makefile.builder signifies we have to make an SRPM
 										// using make, and ignore setup.py, because this is a
 										// Qubes OS builder-powered project.
+										if (fileExists('setup.cfg') && !fileExists('setup.py')) {
+											sh '''
+												set -e
+												rm -rf build dist
+												python=python3
+												$python -m build --sdist
+												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
+												rm -rf build dist
+											'''
 										if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
 											sh '''
 												set -e
