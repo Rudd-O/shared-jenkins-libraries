@@ -129,7 +129,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'python3-wheel',
 									'python3-tox-current-env',
 									'tox',
-									'poetry'
+									'poetry',
 									'golang',
 									'make',
 									'autoconf',
@@ -137,7 +137,6 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'wget',
 									'mock',
 									'nosync',
-									'poetry',
 								])
 								if (srpm_deps != null) {
 									echo "Installing additional dependencies ${srpm_deps}."
