@@ -165,7 +165,12 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 											sh '''
 											set -e
 											if test -f mypy.ini ; then
-												MYPYPATH=lib:src mypy -p $(python3 setup.py --name)
+												if grep -q ^name setup.cfg ; then
+													name=$(cat setup.cfg | head - 1 | grep ^name | cut -d = -f 2)
+												else
+													name=$(python3 setup.py --name)
+												fi
+												MYPYPATH=lib:src mypy -p $name
 											fi
 											if test -f setup.py -o test -f setup.cfg ; then
 												rm -f ../xunit.xml
