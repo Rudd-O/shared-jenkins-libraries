@@ -204,7 +204,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
 												rm -rf build dist
 											'''
-										if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
+										} else if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
 											sh '''
 												set -e
 												rm -rf build dist
