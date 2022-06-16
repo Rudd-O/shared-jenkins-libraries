@@ -172,7 +172,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 												fi
 												MYPYPATH=lib:src mypy -p $name
 											fi
-											if test -f setup.py -o test -f setup.cfg ; then
+											if test -f setup.py -o -f setup.cfg ; then
 												rm -f ../xunit.xml
 												pytest --junit-xml=../xunit.xml -o junit_logging=all
 											fi
