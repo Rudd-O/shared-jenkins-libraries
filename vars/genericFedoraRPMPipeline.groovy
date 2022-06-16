@@ -122,6 +122,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'shyaml',
 									'python3-pytest',
 									'python3',
+									'python3-build',
 									'python3-setuptools',
 									'python3-pyyaml',
 									'python3-mypy',
