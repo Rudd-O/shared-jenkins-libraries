@@ -166,7 +166,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 											set -e
 											if test -f mypy.ini ; then
 												if grep -q ^name setup.cfg ; then
-													name=$(cat setup.cfg | head - 1 | grep ^name | cut -d = -f 2)
+													name=$(cat setup.cfg | head -1 | grep ^name | cut -d = -f 2)
 												else
 													name=$(python3 setup.py --name)
 												fi
