@@ -86,12 +86,13 @@ def getrpmpatches(String filename) {
 }
 
 def dnfInstall(deps) {
-  sh """#!/bin/bash -xe
-     (
-         flock 9
-         deps="${deps.join(' ')}"
-         rpm -q \$deps || sudo dnf install --disablerepo='*qubes*' --disableplugin='*qubes*' -y \$deps
-     ) 9> /tmp/\$USER-dnf-lock
+    deps = deps.collect { shellQuote(it) }
+    deps = deps.join(' ')
+    sh """#!/bin/bash -xe
+          (
+              flock 9
+              rpm -q \$deps || sudo dnf install --disablerepo='*qubes*' --disableplugin='*qubes*' -y \$deps
+          ) 9> /tmp/\$USER-dnf-lock
      """
 }
 
