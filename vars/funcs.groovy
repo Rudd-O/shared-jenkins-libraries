@@ -558,6 +558,7 @@ config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake get
 config_opts['extra_chroot_dirs'] = ['/run/lock']
 config_opts['isolation'] = 'nspawn'
 config_opts['rpmbuild_networking'] = True
+config_opts['use_host_resolv'] = False
 config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
 config_opts['releasever'] = '$release'
 config_opts['nosync'] = False
