@@ -557,7 +557,7 @@ config_opts['legal_host_arches'] = ('$arch',)
 config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools python3-setuptools /usr/bin/python'
 config_opts['extra_chroot_dirs'] = ['/run/lock']
 config_opts['isolation'] = 'nspawn'
-config_opts['rpmbuild_networking'] = False
+config_opts['rpmbuild_networking'] = True
 config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
 config_opts['releasever'] = '$release'
 config_opts['nosync'] = False
@@ -568,7 +568,6 @@ config_opts['use_bootstrap'] = False
 config_opts['cleanup_on_success'] = False
 config_opts['cleanup_on_failure'] = False
 config_opts['package_manager'] = 'dnf'
-config_opts['rpmbuild_networking'] = False
 
 config_opts['cache_topdir'] = '$cache_topdir'
 config_opts['plugin_conf']['root_cache_enable'] = True
