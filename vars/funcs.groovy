@@ -585,7 +585,6 @@ config_opts['yum.conf'] = """
 [main]
 keepcache=1
 cachedir=/var/cache/yum
-debuglevel=9
 reposdir=/dev/null
 logfile=/var/log/yum.log
 retries=20
