@@ -224,8 +224,13 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 													python=python2
 												fi
 												$python setup.py sdist
-												$python setup.py bdist_rpm --spec-only
-												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs dist/*.spec
+												specs=$(ls -1 *.spec)
+												if [ "$specs" != "" ] ; then
+													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
+												else
+													$python setup.py bdist_rpm --spec-only
+													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs dist/*.spec
+												fi
 												rm -rf build dist
 											'''
 										} else if (fileExists('pypipackage-to-srpm.yaml')) {
