@@ -224,7 +224,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 													python=python2
 												fi
 												$python setup.py sdist
-												specs=$(ls -1 *.spec)
+												specs=$(ls -1 *.spec || true)
 												if [ "$specs" != "" ] ; then
 													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
 												else
