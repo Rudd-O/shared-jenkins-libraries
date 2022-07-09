@@ -738,21 +738,21 @@ user_agent={{ user_agent }}
 
 [fedora]
 name=fedora
-metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-{{ fedorareleasever }}&arch=\$basearch
+metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-{{ fedorareleasever }}&arch={{ target_arch }}
 gpgkey=file:///usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-{{ fedorareleasever }}-primary
 gpgcheck=1
 skip_if_unavailable=False
 
 [updates]
 name=updates
-metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-f{{ fedorareleasever }}&arch=\$basearch
+metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-f{{ fedorareleasever }}&arch={{ target_arch }}
 gpgkey=file:///usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-{{ fedorareleasever }}-primary
 gpgcheck=1
 skip_if_unavailable=False
 
 [qubes-dom0-current]
 name = Qubes Dom0 Repository (updates)
-metalink = https://yum.qubes-os.org/r\$releasever/current/dom0/fc{{ fedorareleasever }}/repodata/repomd.xml.metalink
+metalink = https://yum.qubes-os.org/r{{ releasever }}/current/dom0/fc{{ fedorareleasever }}/repodata/repomd.xml.metalink
 skip_if_unavailable=False
 enabled = 1
 metadata_expire = 6h
