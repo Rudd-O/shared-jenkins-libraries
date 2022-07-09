@@ -656,7 +656,7 @@ config_opts['package_manager'] = 'dnf'
 config_opts['dnf.conf'] = """
 [main]
 keepcache=1
-debuglevel=2
+debuglevel=1
 reposdir=/dev/null
 logfile=/var/log/yum.log
 retries=20
