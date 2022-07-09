@@ -709,7 +709,7 @@ config_opts['root'] = 'qubes-{{ releasever }}-{{ target_arch }}'
 
 config_opts['description'] = 'Qubes OS {{ releasever }}'
 
-config_opts['chroot_setup_cmd'] = 'install systemd bash coreutils tar dnf qubes-release'
+config_opts['chroot_setup_cmd'] = 'install systemd bash coreutils tar dnf qubes-release @buildsys-build rpm-build'
 
 config_opts['dist'] = 'q{{ releasever }}'
 config_opts['extra_chroot_dirs'] = [ '/run/lock', ]
