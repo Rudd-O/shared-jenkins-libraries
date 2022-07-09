@@ -674,12 +674,13 @@ function config_mocklock_qubes() {
     local release="$1"
     local arch="$2"
 
-    if [ "$release" == "4.1" ] ; then
+    if [ "$release" == "q4.1" ] ; then
         fedorareleasever=32
     else
         echo Do not know what the Fedora release version is for Qubes $release >&2
         exit 55
     fi
+    releasever=$(echo "$release" | sed 's/^.//') # strip first char
 
     local basedir="$MOCK_CACHEDIR"
     if test -z "$basedir" ; then
@@ -696,7 +697,7 @@ function config_mocklock_qubes() {
 
     local tmpcfg=$(mktemp "$basedir"/XXXXXX)
     cat > "$tmpcfg" <<EOF
-config_opts['releasever'] = '$release'
+config_opts['releasever'] = '$releasever'
 config_opts['fedorareleasever'] = '$fedorareleasever'
 
 config_opts['target_arch'] = 'x86_64'
