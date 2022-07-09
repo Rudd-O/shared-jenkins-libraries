@@ -3,9 +3,12 @@ def automockfedorarpms_all(releases) {
         {
             return {
 				def n = "RPMs for Fedora ${it[0]}"
+				println n
+				println it[0]
+				println it[0].startsWith("q")
 				if it[0].startsWith("q") {
 					def b = it[0].reverse().take(1).reverse()
-					n = "RPMs for Qubes ${b}"
+					n = "RPMs for Qubes OS ${b}"
 				}
                 stage(n) {
                     script {
@@ -258,7 +261,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 								deleteDir()
 							}
 							script {
-								println "Building RPMs for Fedora releases ${env.RELEASE}"
+								println "Building RPMs for releases ${env.RELEASE}"
 								parallel automockfedorarpms_all(env.RELEASE.split(' '))
 							}
 						}
