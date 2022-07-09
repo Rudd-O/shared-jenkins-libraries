@@ -433,7 +433,6 @@ def downloadUrl(url, filename, sha256sum, outdir) {
             outdir = "."
         }
         sh """
-                set -x
                 set +e
                 s=\$(sha256sum ${outdir}/${filename} | cut -f 1 -d ' ' || true)
                 if [ "\$s" != "${sha256sum}" ] ; then
@@ -500,7 +499,7 @@ def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, key
 
 def mockShellLib() {
     return '''
-# set +x >/dev/null 2>&1
+set +x >/dev/null 2>&1
 
 function config_mocklock_fedora() {
     local outputfile="$1"
@@ -729,17 +728,10 @@ function mocklock() {
     if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; return "$cfgret" ; fi
 
     if cmp "$cfgfile" "$tmpcfg" >&2 ; then
-        must_init=0
         rm -f "$tmpcfg"
     else
-        must_init=1
         mv -f "$tmpcfg" "$cfgfile"
         echo Reconfigured "$cfgfile" >&2
-    fi
-
-    if [ "$must_init" == "1" ] ; then
-        echo Initializing "$cfgfile" now >&2
-        flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --clean >&2
     fi
 
     local ret=60
