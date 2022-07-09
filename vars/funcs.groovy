@@ -502,48 +502,15 @@ def mockShellLib() {
     return '''
 # set +x >/dev/null 2>&1
 
-function multail() {
-  local ppid
-  local pids
-  local basename
-  local pidfile
-  local sedpid
-  local tailpid
-  pids=
-  ppid="$1"
-  shift
-  while [ "$1" != "" ] ; do
-    basename=`basename "$1"`
-    pidfile=`mktemp`
-    ( tail -F "$1" --pid="$ppid" & echo $! 1>&3 ) 3> "$pidfile" | sed -u "s/^/$basename: /" >&2 &
-    sedpid=$!
-    tailpid=$(<"$pidfile")
-    rm -f "$pidfile"
-    pids="$tailpid $sedpid $pids"
-    shift
-  done
-  echo "$pids"
-}
+function config_mocklock_fedora() {
+    local outputfile="$1"
+    local release="$2"
+    local arch="$3"
+    local basedir="$4"
+    local root="$5"
+    local cache_topdir="$6"
 
-function config_mocklock() {
-    local release="$1"
-    local arch="$2"
-
-    local basedir="$MOCK_CACHEDIR"
-    if test -z "$basedir" ; then
-        echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
-        exit 56
-    fi
-
-    mkdir -p "$basedir"
-
-    local jail="fedora-$release-$arch-generic"
-    local cfg="$basedir/$jail.cfg"
-    local root="$jail"
-    local cache_topdir=/var/cache/mock
-
-    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
-    cat > "$tmpcfg" <<EOF
+    cat > "$outputfile" <<EOF
 config_opts['basedir'] = '$basedir'
 config_opts['root'] = '$root'
 config_opts['target_arch'] = '$arch'
@@ -649,55 +616,26 @@ gpgcheck=0
 metadata_expire=30
 """
 EOF
-
-    if cmp "$cfg" "$tmpcfg" >&2 ; then
-        must_init=0
-        rm -f "$tmpcfg"
-    else
-        must_init=1
-        mv -f "$tmpcfg" "$cfg"
-        echo Configured "$cfg" as follows >&2
-        echo =============================== >&2
-        cat "$cfg" >&2
-        echo =============================== >&2
-    fi
-
-    if [ "$must_init" == "1" ] ; then
-        echo Initializing "$cfg" now >&2
-        flock "$cfg".lock /usr/bin/mock -r "$cfg" --init >&2
-    fi
-
-    echo "$cfg"
 }
 
 function config_mocklock_qubes() {
-    local release="$1"
-    local arch="$2"
+    local outputfile="$1"
+    local release="$2"
+    local arch="$3"
+    local basedir="$4"
+    local root="$5"
+    local cache_topdir="$6"
 
     if [ "$release" == "q4.1" ] ; then
-        fedorareleasever=32
+        local fedorareleasever=32
     else
         echo Do not know what the matching Fedora release version is for Qubes $release >&2
         exit 55
     fi
-    releasever=$(echo "$release" | sed 's/^.//') # strip first char
+    release=$(echo "$release" | sed 's/^.//') # strip first char
 
-    local basedir="$MOCK_CACHEDIR"
-    if test -z "$basedir" ; then
-        echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
-        exit 56
-    fi
-
-    mkdir -p "$basedir"
-
-    local jail="qubes-$release-$arch-generic"
-    local cfg="$basedir/$jail.cfg"
-    local root="$jail"
-    local cache_topdir=/var/cache/mock
-
-    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
-    cat > "$tmpcfg" <<EOF
-config_opts['releasever'] = '$releasever'
+    cat > "$outputfile" <<EOF
+config_opts['releasever'] = '$release'
 config_opts['fedorareleasever'] = '$fedorareleasever'
 
 config_opts['target_arch'] = 'x86_64'
@@ -705,7 +643,8 @@ config_opts['legal_host_arches'] = ('x86_64',)
 
 include('templates/fedora-branched.tpl')
 
-config_opts['root'] = 'qubes-{{ releasever }}-{{ target_arch }}'
+config_opts['basedir'] = '$basedir'
+config_opts['root'] = '$root'
 
 config_opts['description'] = 'Qubes OS {{ releasever }}'
 
@@ -761,25 +700,6 @@ gpgkey = file:///usr/share/distribution-gpg-keys/qubes/qubes-release-4-signing-k
 
 """
 EOF
-
-    if cmp "$cfg" "$tmpcfg" >&2 ; then
-        must_init=0
-        rm -f "$tmpcfg"
-    else
-        must_init=1
-        mv -f "$tmpcfg" "$cfg"
-        echo Configured "$cfg" as follows >&2
-        echo =============================== >&2
-        cat "$cfg" >&2
-        echo =============================== >&2
-    fi
-
-    if [ "$must_init" == "1" ] ; then
-        echo Initializing "$cfg" now >&2
-        flock "$cfg".lock /usr/bin/mock -r "$cfg" --init >&2
-    fi
-
-    echo "$cfg"
 }
 
 function mocklock() {
@@ -787,26 +707,48 @@ function mocklock() {
     shift
     local arch="$1"
     shift
-    local cfg
 
-    echo About to run mock. >&2
-    echo "I am user $(whoami)." >&2
-    echo "We will be using release $release and arch $arch." >&2
-    echo "Arguments for mock: $@" >&2
+    local basedir="$MOCK_CACHEDIR"
+    if test -z "$basedir" ; then
+        echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
+        exit 56
+    fi
 
-    local configurator=config_mocklock
+    mkdir -p "$basedir"
+
+    local jail="fedora-$release-$arch-generic"
+    local cfgfile="$basedir/$jail.cfg"
+    local root="$jail"
+    local cache_topdir=/var/cache/mock
+
+    local configurator=config_mocklock_fedora
     if [[ $release == q* ]] ; then
         configurator=config_mocklock_qubes
     fi
 
-    cfg=$( $configurator "$release" "$arch" )
+    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
+    local cfgret=0
+    $configurator "$tmpcfg" "$release" "$arch" "$basedir" "$root" "$cache_topdir" || cfgret=$?
+    if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; return "$cfgret" ; fi
 
-    echo "Using mock config $cfg." >&2
+    if cmp "$cfgfile" "$tmpcfg" >&2 ; then
+        must_init=0
+        rm -f "$tmpcfg"
+    else
+        must_init=1
+        mv -f "$tmpcfg" "$cfgfile"
+        echo Reconfigured "$cfgfile" >&2
+    fi
+
+    if [ "$must_init" == "1" ] ; then
+        echo Initializing "$cfgfile" now >&2
+        flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --clean >&2
+    fi
 
     local ret=60
     while [ "$ret" == "60" ] ; do
         grep mock /etc/group >/dev/null 2>&1 || groupadd -r mock
-        flock "$cfg".lock /usr/bin/mock -N -r "$cfg" "$@" < /dev/null && ret=0 || ret=$?
+        flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0 || ret=$?
         if [ "$ret" == "60" ] ; then
             echo "Sleeping for 15 seconds" >&2
             sleep 15
