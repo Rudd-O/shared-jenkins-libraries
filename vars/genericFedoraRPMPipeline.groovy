@@ -2,7 +2,12 @@ def automockfedorarpms_all(releases) {
     def parallelized = funcs.combo(
         {
             return {
-                stage("RPMs for Fedora ${it[0]}") {
+				def n = "RPMs for Fedora ${it[0]}"
+				if it[0].startsWith("q") {
+					def b = it[0].reverse().take(1).reverse()
+					n = "RPMs for Qubes ${b}"
+				}
+                stage(n) {
                     script {
                         funcs.automockfedorarpms(it[0])
                     }
