@@ -137,6 +137,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 									'automake',
 									'wget',
 									'mock',
+									'distribution-gpg-keys',
 								])
 								if (srpm_deps != null) {
 									echo "Installing additional dependencies ${srpm_deps}."
