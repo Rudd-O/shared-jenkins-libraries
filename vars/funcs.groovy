@@ -641,8 +641,6 @@ config_opts['fedorareleasever'] = '$fedorareleasever'
 config_opts['target_arch'] = 'x86_64'
 config_opts['legal_host_arches'] = ('x86_64',)
 
-include('templates/fedora-branched.tpl')
-
 config_opts['basedir'] = '$basedir'
 config_opts['root'] = '$root'
 
@@ -653,7 +651,6 @@ config_opts['chroot_setup_cmd'] = 'install systemd bash coreutils tar dnf qubes-
 config_opts['dist'] = 'q{{ releasever }}'
 config_opts['extra_chroot_dirs'] = [ '/run/lock', ]
 config_opts['package_manager'] = 'dnf'
-config_opts['bootstrap_image'] = 'registry.fedoraproject.org/fedora:{{ fedorareleasever }}'
 
 config_opts['dnf.conf'] = """
 [main]
@@ -803,7 +800,6 @@ def automockrpms(String myRelease) {
     }
     ArrayList args = [
         "--unpriv",
-        "--verbose",
         "--define=build_number ${BUILD_NUMBER}",
         "--resultdir=out/${release}",
         "--rebuild"
