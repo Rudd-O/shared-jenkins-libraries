@@ -217,7 +217,7 @@ def loadParameter(name, defaultValue) {
 def srpmFromSpecWithUrl(specfilename, srcdir, outdir, sha256sum='', armsha256sum='') {
 	// Specfile SOURCE0 has the URL.  Sha256sum validates the URL's ontents.
 	// srcdir is where the URL file is deposited.
-	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockfedorarpms finds it.
+	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockrpms finds it.
 	return {
 		url = getrpmfield(specfilename, "Source0")
 		if (url == "") {
@@ -344,7 +344,7 @@ def glob(spec) {
 // Create source RPM from a source tree.  Finds first specfile in src/ and uses that.
 def srpmFromSpecAndSourceTree(srcdir, outdir) {
 	// srcdir is the directory tree that contains the source files to be tarred up.
-	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockfedorarpms finds it.
+	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockrpms finds it.
 	return {
 		println "Retrieving specfiles..."
 		filename = sh(
@@ -380,7 +380,7 @@ def srpmFromSpecAndDirContainingSpecSources(srcdir, outdir) {
 	// Assumes the srcdir contains the sources that do not exist
 	// in src/ -- then merges the sources from src/ into srcdir/
 	// srcdir is the directory tree that contains the source files not already available in src/.
-	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockfedorarpms finds it.
+	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockrpms finds it.
 	return {
 		filename = sh(
 			returnStdout: true,
@@ -677,7 +677,7 @@ function config_mocklock_qubes() {
     if [ "$release" == "q4.1" ] ; then
         fedorareleasever=32
     else
-        echo Do not know what the Fedora release version is for Qubes $release >&2
+        echo Do not know what the matching Fedora release version is for Qubes $release >&2
         exit 55
     fi
     releasever=$(echo "$release" | sed 's/^.//') # strip first char
@@ -829,7 +829,7 @@ def mock(String release, String arch, ArrayList args, ArrayList srpms) {
     }
 }
 
-def automockfedorarpms(String myRelease) {
+def automockrpms(String myRelease) {
     def stuff = ""
     def release = ""
     def arch = ""

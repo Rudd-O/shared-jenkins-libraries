@@ -1,4 +1,4 @@
-def automockfedorarpms_all(releases) {
+def automockrpms_all(releases) {
     def parallelized = funcs.combo(
         {
             return {
@@ -8,7 +8,7 @@ def automockfedorarpms_all(releases) {
 				}
                 stage(n) {
                     script {
-                        funcs.automockfedorarpms(it[0])
+                        funcs.automockrpms(it[0])
                     }
                 }
             }
@@ -19,7 +19,7 @@ def automockfedorarpms_all(releases) {
     return parallelized
 }
 
-def autouploadfedorarpms(myRelease) {
+def autouploadrpms(myRelease) {
 	sh("/var/lib/jenkins/userContent/upload-deliverables out/*/*.rpm")
 }
 
@@ -258,7 +258,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 							}
 							script {
 								println "Building RPMs for releases ${env.RELEASE}"
-								parallel automockfedorarpms_all(env.RELEASE.split(' '))
+								parallel automockrpms_all(env.RELEASE.split(' '))
 							}
 						}
 					}
@@ -352,9 +352,9 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 					}
 				}
 				steps {
-					lock('autouploadfedorarpms') {
+					lock('autouploadrpms') {
 						script {
-							autouploadfedorarpms()
+							autouploadrpms()
 						}
 					}
 				}
