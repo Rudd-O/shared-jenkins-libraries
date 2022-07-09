@@ -39,7 +39,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 		}
 
 		parameters {
-			string defaultValue: '', description: "Which Fedora releases to build for (empty means the job's default).", name: 'RELEASE', trim: true
+			string defaultValue: '', description: "Which releases to build for (empty means the job's default).", name: 'RELEASE', trim: true
 		}
 
 		stages {
