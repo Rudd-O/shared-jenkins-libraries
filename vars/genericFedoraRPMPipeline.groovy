@@ -6,7 +6,7 @@ def automockfedorarpms_all(releases) {
 				println n
 				println it[0]
 				println it[0].startsWith("q")
-				if it[0].startsWith("q") {
+				if (it[0].startsWith("q")) {
 					def b = it[0].reverse().take(1).reverse()
 					n = "RPMs for Qubes OS ${b}"
 				}
