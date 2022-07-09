@@ -750,7 +750,8 @@ def mock(String release, String arch, ArrayList args, ArrayList srpms) {
     def quotedargs = args.collect{ shellQuote(it) }.join(" ")
     for (srpm in srpms) {
         def mocklock = "mocklock " + release + " " + arch + " " + quotedargs + " " + shellQuote(srpm)
-        def cmd = "set +x >/dev/null 2>&1\n" + mockShellLib() + "set -x\n " + mocklock
+        println "Will run ${mocklock} now."
+        def cmd = "set +x >/dev/null 2>&1\n" + mockShellLib() + mocklock
         sh(
             script: cmd,
             label: "Run mocklock ${release} for ${srpm} on ${arch}"
