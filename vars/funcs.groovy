@@ -529,16 +529,12 @@ function config_mocklock() {
     local release="$1"
     local arch="$2"
 
-    local basebase
-    if test -n "$MOCK_CACHEDIR" ; then
-        basebase="$MOCK_CACHEDIR"
-    else
-        basebase="$WORKSPACE/mock"
+    local basedir="$MOCK_CACHEDIR"
+    if test -z "$basedir" ; then
         echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
         exit 56
     fi
 
-    local basedir="$basebase"
     mkdir -p "$basedir"
 
     local jail="fedora-$release-$arch-generic"
@@ -674,6 +670,117 @@ EOF
     echo "$cfg"
 }
 
+function config_mocklock_qubes() {
+    local release="$1"
+    local arch="$2"
+
+    if [ "$release" == "4.1" ] ; then
+        fedorareleasever=32
+    else
+        echo Do not know what the Fedora release version is for Qubes $release >&2
+        exit 55
+    fi
+
+    local basedir="$MOCK_CACHEDIR"
+    if test -z "$basedir" ; then
+        echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
+        exit 56
+    fi
+
+    mkdir -p "$basedir"
+
+    local jail="qubes-$release-$arch-generic"
+    local cfg="$basedir/$jail.cfg"
+    local root="$jail"
+    local cache_topdir=/var/cache/mock
+
+    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
+    cat > "$tmpcfg" <<EOF
+config_opts['releasever'] = '$release'
+config_opts['fedorareleasever'] = '$fedorareleasever'
+
+config_opts['target_arch'] = 'x86_64'
+config_opts['legal_host_arches'] = ('x86_64',)
+
+include('templates/fedora-branched.tpl')
+
+config_opts['root'] = 'qubes-{{ releasever }}-{{ target_arch }}'
+
+config_opts['description'] = 'Qubes OS {{ releasever }}'
+
+config_opts['chroot_setup_cmd'] = 'install systemd bash coreutils tar dnf qubes-release'
+
+config_opts['dist'] = 'q{{ releasever }}'
+config_opts['extra_chroot_dirs'] = [ '/run/lock', ]
+config_opts['package_manager'] = 'dnf'
+config_opts['bootstrap_image'] = 'registry.fedoraproject.org/fedora:{{ fedorareleasever }}'
+
+config_opts['dnf.conf'] = """
+[main]
+keepcache=1
+debuglevel=2
+reposdir=/dev/null
+logfile=/var/log/yum.log
+retries=20
+obsoletes=1
+gpgcheck=0
+assumeyes=1
+syslog_ident=mock
+syslog_device=
+install_weak_deps=0
+metadata_expire=0
+best=1
+protected_packages=
+user_agent={{ user_agent }}
+
+# repos
+
+[fedora]
+name=fedora
+metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-{{ fedorareleasever }}&arch=\$basearch
+gpgkey=file:///usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-{{ fedorareleasever }}-primary
+gpgcheck=1
+skip_if_unavailable=False
+
+[updates]
+name=updates
+metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-f{{ fedorareleasever }}&arch=\$basearch
+gpgkey=file:///usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-{{ fedorareleasever }}-primary
+gpgcheck=1
+skip_if_unavailable=False
+
+[qubes-dom0-current]
+name = Qubes Dom0 Repository (updates)
+metalink = https://yum.qubes-os.org/r\$releasever/current/dom0/fc{{ fedorareleasever }}/repodata/repomd.xml.metalink
+skip_if_unavailable=False
+enabled = 1
+metadata_expire = 6h
+gpgcheck = 1
+gpgkey = file:///usr/share/distribution-gpg-keys/qubes/qubes-release-4-signing-key.asc
+
+"""
+EOF
+
+    if cmp "$cfg" "$tmpcfg" >&2 ; then
+        must_init=0
+        rm -f "$tmpcfg"
+    else
+        must_init=1
+        mv -f "$tmpcfg" "$cfg"
+        echo Configured "$cfg" as follows >&2
+        echo =============================== >&2
+        cat "$cfg" >&2
+        echo =============================== >&2
+    fi
+
+    if [ "$must_init" == "1" ] ; then
+        echo Initializing "$cfg" now >&2
+        flock "$cfg".lock /usr/bin/mock -r "$cfg" --init >&2
+    fi
+
+    echo "$cfg"
+}
+
 function mocklock() {
     local release="$1"
     shift
@@ -686,7 +793,12 @@ function mocklock() {
     echo "We will be using release $release and arch $arch." >&2
     echo "Arguments for mock: $@" >&2
 
-    cfg=$( config_mocklock "$release" "$arch" )
+    local configurator=config_mocklock
+    if [[ $release == q* ]] ; then
+        configurator=config_mocklock_qubes
+    fi
+
+    cfg=$( $configurator "$release" "$arch" )
 
     echo "Using mock config $cfg." >&2
 

@@ -1,5 +1,3 @@
-def RELEASE = funcs.loadParameter('RELEASE', '30')
-
 def call() {
 	pipeline {
 
@@ -12,7 +10,7 @@ def call() {
 		}
 
 		parameters {
-			string defaultValue: '', description: "Which Fedora releases to build for (empty means the job's default).", name: 'RELEASE', trim: true
+			string defaultValue: '', description: "Which Fedora or Qubes repositories to initialize (start with q for Qubes).", name: 'RELEASE', trim: true
 		}
 
 		stages {
@@ -20,7 +18,7 @@ def call() {
 				steps {
 					script{
 						if (params.RELEASE == '') {
-							env.RELEASE = funcs.loadParameter('RELEASE', '30')
+							env.RELEASE = funcs.loadParameter('RELEASE', '35')
 						} else {
 							env.RELEASE = params.RELEASE
 						}
