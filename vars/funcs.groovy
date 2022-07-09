@@ -508,6 +508,8 @@ function config_mocklock_fedora() {
     local cache_topdir="$6"
 
     cat > "$outputfile" <<EOF
+config_opts['print_main_output'] = True
+
 config_opts['basedir'] = '$basedir'
 config_opts['root'] = '$root'
 config_opts['target_arch'] = '$arch'
@@ -632,6 +634,8 @@ function config_mocklock_qubes() {
     release=$(echo "$release" | sed 's/^.//') # strip first char
 
     cat > "$outputfile" <<EOF
+config_opts['print_main_output'] = True
+
 config_opts['releasever'] = '$release'
 config_opts['fedorareleasever'] = '$fedorareleasever'
 
