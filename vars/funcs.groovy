@@ -289,12 +289,8 @@ def buildDownloadedPypiPackage(basename, opts="") {
         sh """
         y=pypipackage-to-srpm.yaml
         disable_debug=
-        mangle_name=
         if [ "\$(shyaml get-value disable_debug False < \$y)" == "True" ] ; then
                 disable_debug=--disable-debug
-        fi
-        if [ "\$(shyaml get-value mangle_name True < \$y)" == "False" ] ; then
-                mangle_name=--no-mangle-name
         fi
         if [ "\$(shyaml get-value arch_dependent False < \$y)" == "True" ] ; then
                 arch_dependent=--arch-dependent
@@ -326,9 +322,9 @@ def buildDownloadedPypiPackage(basename, opts="") {
                 test -f "\$f" || diffs=0
         done
         if [ "\$diffs" == "1" ] ; then
-                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$mangle_name \$disable_debug ${opts} "${basename}" *.diff
+                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$disable_debug ${opts} "${basename}" *.diff
         else
-                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$mangle_name \$disable_debug ${opts} "${basename}"
+                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$disable_debug ${opts} "${basename}"
         fi
         """
 }
