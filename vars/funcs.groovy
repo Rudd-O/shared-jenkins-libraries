@@ -307,6 +307,16 @@ def buildDownloadedPypiPackage(basename, opts="") {
                 extra_globs="--extra-globs=\$v \$extra_globs"
             done
         fi
+        if [ "\$(shyaml get-values buildrequires < \$y)" != "" ] ; then
+            for v in \$(shyaml get-values buildrequires < \$y) ; do
+                extra_buildrequires="--extra-buildrequires=\$v \$extra_buildrequires"
+            done
+        fi
+        if [ "\$(shyaml get-values requires < \$y)" != "" ] ; then
+            for v in \$(shyaml get-values requires < \$y) ; do
+                extra_requires="--extra-requires=\$v \$extra_requires"
+            done
+        fi
         epoch=\$(shyaml get-value epoch '' < \$y || true)
         if [ "\$epoch" != "" ] ; then
                 epoch="--epoch=\$epoch"
@@ -316,9 +326,9 @@ def buildDownloadedPypiPackage(basename, opts="") {
                 test -f "\$f" || diffs=0
         done
         if [ "\$diffs" == "1" ] ; then
-                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$arch_dependent \$epoch \$mangle_name \$disable_debug ${opts} "${basename}" *.diff
+                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$mangle_name \$disable_debug ${opts} "${basename}" *.diff
         else
-                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$arch_dependent \$epoch \$mangle_name \$disable_debug ${opts} "${basename}"
+                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$mangle_name \$disable_debug ${opts} "${basename}"
         fi
         """
 }
