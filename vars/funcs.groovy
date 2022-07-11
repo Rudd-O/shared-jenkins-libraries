@@ -296,7 +296,7 @@ def buildDownloadedPypiPackage(basename, opts="") {
         if [ "\$(shyaml get-value mangle_name True < \$y)" == "False" ] ; then
                 mangle_name=--no-mangle-name
         fi
-        if [ "\$(shyaml get-value arch_dependent True < \$y)" == "False" ] ; then
+        if [ "\$(shyaml get-value arch_dependent False < \$y)" == "True" ] ; then
                 arch_dependent=--arch-dependent
         fi
         epoch=\$(shyaml get-value epoch '' < \$y || true)
