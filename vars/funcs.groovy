@@ -304,7 +304,8 @@ def buildDownloadedPypiPackage(basename, opts="") {
         fi
         if [ "\$(shyaml get-values extra_globs < \$y)" != "" ] ; then
             for v in \$(shyaml get-values extra_globs < \$y) ; do
-            extra_globs="--extra-globs=\$v \$extra_globs"
+                extra_globs="--extra-globs=\$v \$extra_globs"
+            done
         fi
         epoch=\$(shyaml get-value epoch '' < \$y || true)
         if [ "\$epoch" != "" ] ; then
