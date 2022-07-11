@@ -300,7 +300,7 @@ def buildDownloadedPypiPackage(basename, opts="") {
                 arch_dependent=--arch-dependent
         fi
         if [ "\$(shyaml get-value module_to_save < \$y)" != "" ] ; then
-                module_to_save=--module-to-save=\$(shyaml get-value module_to_save)
+                module_to_save=--module-to-save=\$(shyaml get-value module_to_save < \$y)
         fi
         if [ "\$(shyaml get-values extra_globs < \$y)" != "" ] ; then
             for v in \$(shyaml get-values extra_globs < \$y) ; do
