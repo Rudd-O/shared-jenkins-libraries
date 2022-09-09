@@ -87,7 +87,25 @@ def call(build_deps = null, test_step = null) {
 							unstash 'source'
 						}
 					}
-					stage('Build') {
+					stage('Test') {
+						steps {
+							script {
+								try {
+									if (test_step != null) {
+										println test_step
+										test_step()
+									}
+								} finally {
+									if (fileExists("xunit.xml")) {
+										junit 'xunit.xml'
+									} else {
+										println "xunit.xml does not exist -- cannot save xunit results."
+									}
+								}
+							}
+						}
+					}
+					stage('Package') {
 						steps {
 							script {
 								dir('src') {
@@ -103,24 +121,6 @@ def call(build_deps = null, test_step = null) {
 									}
 									env.DOCKER_TAGS = tags
 									println "Discovered tags: ${tags}"
-								}
-							}
-						}
-					}
-					stage('Test') {
-						steps {
-							script {
-								try {
-									if (test_step != null) {
-										println test_step
-										test_step()
-									}
-								} finally {
-									if (fileExists("xunit.xml")) {
-										junit 'xunit.xml'
-									} else {
-										println "xunit.xml does not exist -- cannot save xunit results."
-									}
 								}
 							}
 						}
