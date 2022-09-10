@@ -62,7 +62,9 @@ def call(build_deps = null, test_step = null) {
 						).trim()
 					}
 					updateBuildNumberDisplayName()
-					stash includes: '**', name: 'source', useDefaultExcludes: false
+					dir('src') {
+						stash includes: '**', name: 'source', useDefaultExcludes: false
+					}
 				}
 			}
 			stage('Dispatch') {
@@ -83,8 +85,12 @@ def call(build_deps = null, test_step = null) {
 					}
 					stage('Unstash') {
 						steps {
-							deleteDir()
-							unstash 'source'
+							dir('src') {
+								deleteDir()
+							}
+							dir('src') {
+								unstash 'source'
+							}
 						}
 					}
 					stage('Test') {
