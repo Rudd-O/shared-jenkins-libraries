@@ -73,7 +73,7 @@ def call(build_deps = null, test_step = null) {
 					stage('Deps') {
 						steps {
 							script {
-								funcs.dnfInstall(['podman', 'buildah', 'make'])
+								funcs.dnfInstall(['podman', 'buildah', 'make', 'rsync'])
 								if (build_deps != null) {
 									echo "Installing additional dependencies ${build_deps}."
 									funcs.dnfInstall(build_deps)
