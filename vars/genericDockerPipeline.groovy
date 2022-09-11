@@ -97,8 +97,8 @@ def call(build_deps = null, test_step = null) {
 						steps {
 							script {
 								try {
+									sh "rm -f xunit.xml"
 									if (test_step != null) {
-										println test_step
 										test_step()
 									}
 								} finally {

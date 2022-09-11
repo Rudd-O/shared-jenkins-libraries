@@ -162,8 +162,8 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 						steps {
 							script {
 								try {
+									sh "rm -f xunit.xml"
 									if (test_step != null) {
-										println test_step
 										test_step()
 									} else {
 										dir('src') {
