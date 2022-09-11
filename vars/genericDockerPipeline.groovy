@@ -115,7 +115,7 @@ def call(build_deps = null, test_step = null) {
 						steps {
 							script {
 								dir('src') {
-									sh 'BUILDAH_ISOLATION=rootless make docker IMAGE_BRANCH=$BRANCH_NAME'
+									sh 'BUILDAH_ISOLATION=chroot make docker IMAGE_BRANCH=$BRANCH_NAME'
 									tags = sh(
 										script: "make -s docker-tags IMAGE_BRANCH=$BRANCH_NAME",
 										returnStdout: true
