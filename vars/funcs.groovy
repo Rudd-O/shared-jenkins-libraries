@@ -743,7 +743,7 @@ function mocklock() {
 
     local ret=60
     echo "Checking /dev/null" > /dev/stderr
-    ls -la /dev/null
+    ls -la /dev/null >/dev/stderr
     while [ "$ret" == "60" ] ; do
         grep mock /etc/group >/dev/null 2>&1 || groupadd -r mock
         flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0 || ret=$?
