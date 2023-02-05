@@ -757,7 +757,7 @@ function mocklock() {
         echo "Checking mount points in mock jail" >&2
         flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --chroot mount < /dev/null && ret=0 || ret=$?
         echo "Checking /dev/null in mock jail" >&2
-        flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --chroot -- ls -la /dev/null < /dev/null && ret=0 || ret=$?
+        echo Writing to dev null | flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --chroot -- tee -a /dev/null
         echo "Running process in mock jail" >&2
         flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0 || ret=$?
         if [ "$ret" == "60" ] ; then
