@@ -528,7 +528,7 @@ config_opts['rpmbuild_networking'] = True
 config_opts['use_host_resolv'] = False
 config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
 config_opts['releasever'] = '$release'
-config_opts['nosync'] = True
+config_opts['nosync'] = False
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
 config_opts['use_bootstrap'] = False
@@ -641,7 +641,7 @@ function config_mocklock_qubes() {
 config_opts['print_main_output'] = True
 
 config_opts['releasever'] = '$release'
-config_opts['nosync'] = True
+config_opts['nosync'] = False
 config_opts['fedorareleasever'] = '$fedorareleasever'
 
 config_opts['target_arch'] = 'x86_64'
@@ -721,9 +721,7 @@ function mocklock() {
     fi
 
     mkdir -p "$basedir"
-    local cfgfile="$basedir/$jail.cfg"
-    local lockfile="$cfgfile".lock
-    local cache_topdir=/var/cache/mock
+    local lockfile="$basedir/$jail.lock"
 
     (
         flock 9
@@ -736,7 +734,10 @@ function mocklock() {
         fi
 
         local tmpcfg=$(mktemp "$basedir"/XXXXXX)
+        local cfgfile="$basedir/$jail.cfg"
         local cfgret=0
+        local cache_topdir=/var/cache/mock
+
         $configurator "$tmpcfg" "$release" "$arch" "$basedir" "$jail" "$cache_topdir" || cfgret=$?
         if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; exit "$cfgret" ; fi
 
