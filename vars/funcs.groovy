@@ -721,35 +721,37 @@ function mocklock() {
     fi
 
     mkdir -p "$basedir"
-
-    local jail="fedora-$release-$arch-generic"
     local cfgfile="$basedir/$jail.cfg"
-    local root="$jail"
+    local lockfile="$cfgfile".lock
     local cache_topdir=/var/cache/mock
 
-    local configurator=config_mocklock_fedora
-    if [[ $release == q* ]] ; then
-        configurator=config_mocklock_qubes
-    fi
+    (
+        flock 9
 
-    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
-    local cfgret=0
-    $configurator "$tmpcfg" "$release" "$arch" "$basedir" "$root" "$cache_topdir" || cfgret=$?
-    if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; return "$cfgret" ; fi
+        local jail="fedora-$release-$arch-generic"
 
-    if cmp "$cfgfile" "$tmpcfg" >&2 ; then
-        rm -f "$tmpcfg"
-    else
-        flock "$cfgfile".lock mv -f "$tmpcfg" "$cfgfile"
-        echo Reconfigured "$cfgfile" >&2
-    fi
+        local configurator=config_mocklock_fedora
+        if [[ $release == q* ]] ; then
+            configurator=config_mocklock_qubes
+        fi
 
-    local ret=60
-    while [ "$ret" == "60" ] ; do
+        local tmpcfg=$(mktemp "$basedir"/XXXXXX)
+        local cfgret=0
+        $configurator "$tmpcfg" "$release" "$arch" "$basedir" "$jail" "$cache_topdir" || cfgret=$?
+        if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; exit "$cfgret" ; fi
+
+        if cmp "$cfgfile" "$tmpcfg" >&2 ; then
+            rm -f "$tmpcfg"
+        else
+            mv -f "$tmpcfg" "$cfgfile"
+            echo Reconfigured "$cfgfile" >&2
+        fi
+
         echo "Running process in mock jail" >&2
-        flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0 || ret=$?
-    done
-    return "$ret"
+        /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0
+
+    ) 9> "$lockfile"
+
 }
 '''
 }
