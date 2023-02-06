@@ -521,7 +521,7 @@ config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
 # rpmdevtools was installed to support rpmdev-bumpspec below
 # python-setuptools was installed to allow for python builds
-config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools python3-setuptools /usr/bin/python3 shadow-utils'
+config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools python3-setuptools /usr/bin/python3 shadow-utils /bin/sh'
 config_opts['extra_chroot_dirs'] = ['/run/lock']
 config_opts['isolation'] = 'simple'
 config_opts['rpmbuild_networking'] = True
