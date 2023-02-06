@@ -533,7 +533,7 @@ config_opts['nosync_force'] = False
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
 config_opts['use_bootstrap'] = False
-config_opts['cleanup_on_success'] = True
+config_opts['cleanup_on_success'] = False
 config_opts['cleanup_on_failure'] = True
 config_opts['package_manager'] = 'dnf'
 
