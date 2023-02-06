@@ -658,6 +658,7 @@ config_opts['chroot_setup_cmd'] = 'install systemd bash coreutils tar dnf qubes-
 
 config_opts['dist'] = 'q{{ releasever }}'
 config_opts['extra_chroot_dirs'] = [ '/run/lock', ]
+config_opts['isolation'] = 'simple'
 config_opts['package_manager'] = 'dnf'
 
 config_opts['dnf.conf'] = """
