@@ -744,11 +744,7 @@ function mocklock() {
     fi
 
     local ret=60
-    ls -la /dev/null >&2
     while [ "$ret" == "60" ] ; do
-        grep mock /etc/group >/dev/null 2>&1 || groupadd -r mock
-        echo "Checking mount points in mock jail" >&2
-        flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --chroot mount < /dev/null && ret=0 || ret=$?
         echo "Running process in mock jail" >&2
         flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0 || ret=$?
         if [ "$ret" == "60" ] ; then
