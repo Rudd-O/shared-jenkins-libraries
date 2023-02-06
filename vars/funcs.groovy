@@ -739,7 +739,7 @@ function mocklock() {
     if cmp "$cfgfile" "$tmpcfg" >&2 ; then
         rm -f "$tmpcfg"
     else
-        mv -f "$tmpcfg" "$cfgfile"
+        flock "$cfgfile".lock mv -f "$tmpcfg" "$cfgfile"
         echo Reconfigured "$cfgfile" >&2
     fi
 
@@ -747,10 +747,6 @@ function mocklock() {
     while [ "$ret" == "60" ] ; do
         echo "Running process in mock jail" >&2
         flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0 || ret=$?
-        if [ "$ret" == "60" ] ; then
-            echo "Sleeping for 15 seconds" >&2
-            sleep 15
-        fi
     done
     return "$ret"
 }
