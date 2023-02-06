@@ -749,7 +749,8 @@ function mocklock() {
         fi
 
         echo "Running process in mock jail" >&2
-        /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0
+        /usr/bin/mock -r "$cfgfile" "$@" < /dev/null
+        exit $?
 
     ) 9> "$lockfile"
 
