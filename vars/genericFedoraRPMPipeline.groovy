@@ -348,7 +348,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 			stage('Publish') {
 				when {
 					expression {
-						return env.BRANCH_NAME == "master"
+						return env.BRANCH_NAME == "master" || env.BRANCH_NAME.startsWith("unstable-")
 					}
 				}
 				steps {
