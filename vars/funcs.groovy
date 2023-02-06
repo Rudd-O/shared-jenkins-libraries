@@ -744,20 +744,11 @@ function mocklock() {
     fi
 
     local ret=60
-    echo "Checking /dev/null" >&2
     ls -la /dev/null >&2
-    echo "Can I write to /dev/null?" >&2
-    echo b | tee -a /dev/null && {
-        echo "I can write to /dev/null" >&2
-    }  || {
-        echo "I cannot write to /dev/null" >&2
-    }
     while [ "$ret" == "60" ] ; do
         grep mock /etc/group >/dev/null 2>&1 || groupadd -r mock
         echo "Checking mount points in mock jail" >&2
         flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --chroot mount < /dev/null && ret=0 || ret=$?
-        echo "Checking /dev/null in mock jail" >&2
-        echo Writing to dev null | flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" --chroot -- tee -a /dev/null
         echo "Running process in mock jail" >&2
         flock "$cfgfile".lock /usr/bin/mock -r "$cfgfile" "$@" < /dev/null && ret=0 || ret=$?
         if [ "$ret" == "60" ] ; then
