@@ -528,7 +528,7 @@ config_opts['rpmbuild_networking'] = True
 config_opts['use_host_resolv'] = False
 config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
 config_opts['releasever'] = '$release'
-config_opts['nosync'] = True
+config_opts['nosync'] = False
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
 config_opts['use_bootstrap'] = False
@@ -641,7 +641,7 @@ function config_mocklock_qubes() {
 config_opts['print_main_output'] = True
 
 config_opts['releasever'] = '$release'
-config_opts['nosync'] = True
+config_opts['nosync'] = False
 config_opts['fedorareleasever'] = '$fedorareleasever'
 
 config_opts['target_arch'] = 'x86_64'
