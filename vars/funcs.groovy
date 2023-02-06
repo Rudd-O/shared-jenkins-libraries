@@ -802,7 +802,6 @@ def automockrpms(String myRelease) {
         )
     }
     ArrayList args = [
-        "--postinstall",
         "--define=build_number ${BUILD_NUMBER}",
         "--resultdir=out/${release}",
         "--rebuild"
