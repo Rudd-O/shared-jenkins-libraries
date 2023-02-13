@@ -581,7 +581,7 @@ gpgcheck=1
 [rpmfusion-free]
 name=RPM Fusion for Fedora \\$releasever - Free
 #baseurl=http://download1.rpmfusion.org/free/fedora/releases/\\$releasever/Everything/\\$basearch/os/
-mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-\\$releasever&arch=\\$basearch
+metalink=https://mirrors.rpmfusion.org/metalink?repo=free-fedora-\\$releasever&arch=\\$basearch
 enabled=1
 metadata_expire=7d
 gpgcheck=1
@@ -590,26 +590,52 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
 [rpmfusion-free-updates]
 name=RPM Fusion for Fedora \\$releasever - Free - Updates
 #baseurl=http://download1.rpmfusion.org/free/fedora/updates/\\$releasever/\\$basearch/
-mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-fedora-updates-released-\\$releasever&arch=\\$basearch
+metalink=https://mirrors.rpmfusion.org/metalink?repo=free-fedora-updates-released-\\$releasever&arch=\\$basearch
 enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
+
+[rpmfusion-free-tainted]
+name=RPM Fusion for Fedora \\$releasever - Free
+#baseurl=http://download1.rpmfusion.org/free/fedora/tainted/\\$releasever/\\$basearch/debug/
+metalink=https://mirrors.rpmfusion.org/metalink?repo=free-fedora-tainted-\\$releasever&arch=\\$basearch
+enabled=1
+metadata_expire=7d
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
 
 [rpmfusion-nonfree]
 name=RPM Fusion for Fedora \\$releasever - Nonfree
 #baseurl=http://download1.rpmfusion.org/nonfree/fedora/releases/\\$releasever/Everything/\\$basearch/os/
-mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-\\$releasever&arch=\\$basearch
+metalink=https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-\\$releasever&arch=\\$basearch
 enabled=1
-metadata_expire=7d
+enabled_metadata=1
+metadata_expire=14d
+type=rpm-md
 gpgcheck=1
+repo_gpgcheck=0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
 
 [rpmfusion-nonfree-updates]
 name=RPM Fusion for Fedora \\$releasever - Nonfree - Updates
 #baseurl=http://download1.rpmfusion.org/nonfree/fedora/updates/\\$releasever/\\$basearch/
-mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-updates-released-\\$releasever&arch=\\$basearch
+metalink=https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-updates-released-\\$releasever&arch=\\$basearch
 enabled=1
+enabled_metadata=1
+type=rpm-md
 gpgcheck=1
+repo_gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
+
+[rpmfusion-nonfree-tainted]
+name=RPM Fusion for Fedora \\$releasever - Nonfree tainted
+#baseurl=http://download1.rpmfusion.org/nonfree/fedora/tainted/\\$releasever/\\$basearch/
+metalink=https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-tainted-\\$releasever&arch=\\$basearch
+enabled=1
+metadata_expire=14d
+type=rpm-md
+gpgcheck=1
+repo_gpgcheck=0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
 
 [dragonfear]
