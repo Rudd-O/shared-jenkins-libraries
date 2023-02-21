@@ -749,6 +749,9 @@ function mocklock() {
     mkdir -p "$basedir"
     local jail="fedora-$release-$arch-generic"
     local lockfile="$basedir/$jail.lock"
+    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
+    local cfgfile="$basedir/$jail.cfg"
+    local cache_topdir=/var/cache/mock
 
     (
         flock 9
@@ -758,11 +761,7 @@ function mocklock() {
             configurator=config_mocklock_qubes
         fi
 
-        local tmpcfg=$(mktemp "$basedir"/XXXXXX)
-        local cfgfile="$basedir/$jail.cfg"
         local cfgret=0
-        local cache_topdir=/var/cache/mock
-
         $configurator "$tmpcfg" "$release" "$arch" "$basedir" "$jail" "$cache_topdir" || cfgret=$?
         if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; exit "$cfgret" ; fi
 
