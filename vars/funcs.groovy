@@ -747,12 +747,11 @@ function mocklock() {
     fi
 
     mkdir -p "$basedir"
+    local jail="fedora-$release-$arch-generic"
     local lockfile="$basedir/$jail.lock"
 
     (
         flock 9
-
-        local jail="fedora-$release-$arch-generic"
 
         local configurator=config_mocklock_fedora
         if [[ $release == q* ]] ; then
@@ -789,7 +788,7 @@ def mock(String release, String arch, ArrayList args, ArrayList srpms) {
     for (srpm in srpms) {
         def mocklock = "mocklock " + release + " " + arch + " " + quotedargs + " " + shellQuote(srpm)
         println "Will run ${mocklock} now."
-        def cmd = "set +x >/dev/null 2>&1\n" + mockShellLib() + mocklock
+        def cmd = mockShellLib() + mocklock
         sh(
             script: cmd,
             label: "Run mocklock ${release} for ${srpm} on ${arch}"
