@@ -49,7 +49,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 						env.RELEASE = params.RELEASE
 					}
 					script {
-						funcs.announceBeginning()
+						announceBeginning()
 						funcs.durable()
 					}
 				}
@@ -366,7 +366,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 		post {
 			always {
 				script {
-					funcs.announceEnd(currentBuild.currentResult)
+					announceEnd(currentBuild.currentResult)
 				}
 			}
 		}

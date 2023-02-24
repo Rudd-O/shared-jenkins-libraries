@@ -130,18 +130,6 @@ def aptEnableSrc() {
      '''
 }
 
-def announceBeginning() {
-    sh """
-       "$JENKINS_HOME"/userContent/announce-build-result begun || true
-       """
-}
-
-def announceEnd(status) {
-    sh """
-       "$JENKINS_HOME"/userContent/announce-build-result finished ${status} || true
-       """
-}
-
 def basename(aString) {
     return aString.split('/')[-1]
 }
