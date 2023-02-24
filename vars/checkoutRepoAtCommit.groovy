@@ -1,10 +1,12 @@
-def call(String repo, String commit, String outdir) {
+def call(Map config) {
+	// repo
+	// commit
 	// outdir is the directory where the repo will be checked out.
-	dir(outdir) {
+	dir(config.outdir) {
 		checkout(
 			[
 				$class: 'GitSCM',
-				branches: [[name: commit]],
+				branches: [[name: config.commit]],
 				extensions: [
 					[$class: 'CleanBeforeCheckout'],
 					[
@@ -16,7 +18,7 @@ def call(String repo, String commit, String outdir) {
 					],
 				],
 				submoduleCfg: [],
-				userRemoteConfigs: [[url: repo]]
+				userRemoteConfigs: [[url: config.repo]]
 			]
 		)
 	}
