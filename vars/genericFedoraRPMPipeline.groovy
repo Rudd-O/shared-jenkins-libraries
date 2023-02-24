@@ -23,7 +23,7 @@ def autouploadrpms(myRelease) {
 	sh("/var/lib/jenkins/userContent/upload-deliverables out/*/*.rpm")
 }
 
-def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_step = null, test_step = null) {
+def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = null, Closure integration_step = null, Closure test_step = null) {
 	pipeline {
 
 		agent { label 'master' }
