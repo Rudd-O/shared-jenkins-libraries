@@ -404,27 +404,25 @@ def srpmFromSpecAndDirContainingSpecSources(srcdir, outdir) {
 
 def checkoutRepoAtCommit(repo, commit, outdir) {
 	// outdir is the directory where the repo will be checked out.
-	return {
-		dir(outdir) {
-			checkout(
-				[
-					$class: 'GitSCM',
-					branches: [[name: commit]],
-					extensions: [
-						[$class: 'CleanBeforeCheckout'],
-						[
-							$class: 'SubmoduleOption',
-							disableSubmodules: false,
-							parentCredentials: false,
-							recursiveSubmodules: true,
-							trackingSubmodules: false
-						],
+	dir(outdir) {
+		checkout(
+			[
+				$class: 'GitSCM',
+				branches: [[name: commit]],
+				extensions: [
+					[$class: 'CleanBeforeCheckout'],
+					[
+						$class: 'SubmoduleOption',
+						disableSubmodules: false,
+						parentCredentials: false,
+						recursiveSubmodules: true,
+						trackingSubmodules: false
 					],
-					submoduleCfg: [],
-					userRemoteConfigs: [[url: repo]]
-				]
-			)
-		}
+				],
+				submoduleCfg: [],
+				userRemoteConfigs: [[url: repo]]
+			]
+		)
 	}
 }
 
