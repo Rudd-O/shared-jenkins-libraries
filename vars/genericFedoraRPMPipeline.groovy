@@ -81,6 +81,8 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 							env.RELEASE = funcs.loadParameter('RELEASE', '30')
 						}
 						if (checkout_step != null) {
+							println "Executing custom checkout step."
+							println checkout_step
 							checkout_step()
 						}
 					}
