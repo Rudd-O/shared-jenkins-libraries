@@ -1,4 +1,4 @@
-def f(repo, commit, outdir) {
+def call(String repo, String commit, String outdir) {
 	// outdir is the directory where the repo will be checked out.
 	dir(outdir) {
 		checkout(
@@ -20,12 +20,4 @@ def f(repo, commit, outdir) {
 			]
 		)
 	}
-}
-
-def call(repo, commit, outdir) {
-    return {
-        script {
-            f(repo, commit, outdir)
-        }
-    }
 }
