@@ -200,6 +200,7 @@ def call(checkout_step = null, srpm_step = null, srpm_deps = null, integration_s
 						steps {
 							script {
 								if (srpm_step != null) {
+									println "Executing custom SRPM step"
 									println srpm_step
 									srpm_step()
 								} else {
