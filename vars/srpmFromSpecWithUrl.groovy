@@ -2,16 +2,16 @@ def call(String specfilename, String srcdir, String outdir, String sha256sum='',
 	// Specfile SOURCE0 has the URL.  Sha256sum validates the URL's ontents.
 	// srcdir is where the URL file is deposited.
 	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockrpms finds it.
-        url = getrpmfield(specfilename, "Source0")
+        url = funcs.getrpmfield(specfilename, "Source0")
         if (url == "") {
                 error("Could not compute URL of source tarball.")
         }
-        downloadUrl(url, null, sha256sum, srcdir)
+        funcs.downloadUrl(url, null, sha256sum, srcdir)
         if (armsha256sum != ''){
                 armurl = url.replace("amd64", "arm64")
-                downloadUrl(armurl, null, armsha256sum, srcdir)
-                name = getrpmfield(specfilename, "Name")
-                version = getrpmfield(specfilename, "Version")
+                funcs.downloadUrl(armurl, null, armsha256sum, srcdir)
+                name = funcs.getrpmfield(specfilename, "Name")
+                version = funcs.getrpmfield(specfilename, "Version")
                 dir(srcdir) {
                         sh """
                         tar zxvmf \$(basename ${url})
