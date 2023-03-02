@@ -80,6 +80,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 						if (params.RELEASE == '') {
 							env.RELEASE = funcs.loadParameter('RELEASE', '30')
 						}
+						env.PUBLISH_TO_REPO = funcs.loadParameter('PUBLISH_TO_REPO', '')
 						if (checkout_step != null) {
 							println "Executing custom checkout step."
 							println checkout_step
@@ -351,7 +352,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			stage('Publish') {
 				when {
 					expression {
-						return env.BRANCH_NAME == "master" || env.BRANCH_NAME.startsWith("unstable-")
+						return env.BRANCH_NAME == "master" || env.BRANCH_NAME.startsWith("unstable-") || env.PUBLISH_TO_REPO != ""
 					}
 				}
 				steps {
