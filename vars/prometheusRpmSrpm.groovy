@@ -7,7 +7,7 @@ def f(pkgname, sha256sum, armsha256sum='') {
 				sed -i 's|%{_unitdir}|/etc/systemd/system|g' ${pkgname}/autogen_${pkgname}.spec
 			"""
 		}
-		funcs.srpmFromSpecWithUrl(
+		srpmFromSpecWithUrl(
 			"upstream/${pkgname}/autogen_${pkgname}.spec",
 			"upstream/${pkgname}",
 			"src",
