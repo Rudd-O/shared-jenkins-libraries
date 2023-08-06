@@ -7,13 +7,11 @@ def f(pkgname, sha256sum, armsha256sum='') {
 				sed -i 's|%{_unitdir}|/etc/systemd/system|g' ${pkgname}/autogen_${pkgname}.spec
 			"""
 		}
-		srpmFromSpecWithUrl(
-			"upstream/${pkgname}/autogen_${pkgname}.spec",
-			"upstream/${pkgname}",
-			"src",
-			sha256sum,
-			armsha256sum,
-		)()
+		if (armsha256sum != '') {
+			srpmFromSpecWithUrl specfile: "upstream/${pkgname}/autogen_${pkgname}.spec", srcdir: "upstream/${pkgname}", outdir: "src", sha256sum: sha256sum, armsha256sum: armsha256sum
+		} else {
+			srpmFromSpecWithUrl specfile: "upstream/${pkgname}/autogen_${pkgname}.spec", srcdir: "upstream/${pkgname}", outdir: "src", sha256sum: sha256sum
+		}
 	}
 }
 
