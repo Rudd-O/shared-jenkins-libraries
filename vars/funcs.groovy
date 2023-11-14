@@ -14,7 +14,6 @@ def combo(task, axes) {
         }
     }
     comboBuilder(axes, 0)
-    tasks.sort { it.key }
     return tasks
 }
 
