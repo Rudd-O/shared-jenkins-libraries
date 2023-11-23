@@ -20,7 +20,7 @@ def automockrpms_all(releases) {
 }
 
 def autouploadrpms(myRelease) {
-	sh("/var/lib/jenkins/userContent/upload-deliverables out/*/*.rpm")
+	sh("/var/lib/jenkins/userContent/upload-deliverables out/*")
 }
 
 def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = null, Closure integration_step = null, Closure test_step = null) {
