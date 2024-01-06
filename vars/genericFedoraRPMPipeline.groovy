@@ -167,7 +167,9 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								try {
 									sh "rm -f xunit.xml"
 									if (test_step != null) {
-										test_step()
+										dir('src') {
+											test_step()
+										}
 									} else {
 										dir('src') {
 											sh '''
