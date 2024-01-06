@@ -172,13 +172,18 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 										dir('src') {
 											sh '''
 											set -e
-											if test -f mypy.ini ; then
+											if grep -q ^mypy: Makefile ; then
+												make mypy
+											elif test -f mypy.ini ; then
+												pkgname=
 												if grep -q ^name setup.cfg ; then
-													name=$(cat setup.cfg | grep ^name | head -1 | cut -d = -f 2)
-												else
-													name=$(python3 setup.py --name)
+													pkgname=$(cat setup.cfg | grep ^name | head -1 | cut -d = -f 2)
+												elif test -f setup.py ; then
+													pkgname=$(python3 setup.py --name)
 												fi
-												MYPYPATH=lib:src mypy -p $name
+												if [ -n "$pkgname" ] ; then
+													MYPYPATH=lib:src mypy -p $pkgname
+												fi
 											fi
 											if test -f setup.py -o -f setup.cfg ; then
 												rm -f ../xunit.xml
