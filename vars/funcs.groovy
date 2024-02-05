@@ -643,7 +643,7 @@ function mocklock() {
     local lockfile="$basedir/$jail.lock"
     local tmpcfg=$(mktemp "$basedir"/XXXXXX)
     local cfgfile="$basedir/$jail.cfg"
-    local cache_topdir=/var/cache/mock
+    local cache_topdir="$HOME/.cache/mock"
 
     (
         flock 9
