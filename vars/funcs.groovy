@@ -419,12 +419,11 @@ config_opts['rpmbuild_networking'] = True
 config_opts['use_host_resolv'] = False
 config_opts['dist'] = 'fc$release'  # only useful for --resultdir variable subst
 config_opts['releasever'] = '$release'
-config_opts['nosync'] = False
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
+# generates problems in f37+
+config_opts['plugin_conf']['nosync'] = False
 config_opts['use_bootstrap'] = False
-config_opts['cleanup_on_success'] = False
-config_opts['cleanup_on_failure'] = True
 config_opts['package_manager'] = 'dnf'
 
 config_opts['cache_topdir'] = '$cache_topdir'
@@ -438,7 +437,7 @@ config_opts['plugin_conf']['root_cache_opts']['decompress_program'] = 'gunzip'
 config_opts['plugin_conf']['root_cache_opts']['extension'] = '.gz'
 config_opts['plugin_conf']['root_cache_opts']['exclude_dirs'] = ['./proc', './sys', './dev', './tmp/ccache', './var/cache/yum', './builddir', './build' ]
 
-config_opts['yum.conf'] = """
+config_opts['dnf.conf'] = """
 [main]
 keepcache=1
 cachedir=/var/cache/yum
@@ -469,67 +468,6 @@ failovermethod=priority
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-\\$releasever-primary
 gpgcheck=1
 
-# Disabling RPM Fusion.  Nothing I currently build needs it.
-#[rpmfusion-free]
-#name=RPM Fusion for Fedora \\$releasever - Free
-##baseurl=http://download1.rpmfusion.org/free/fedora/releases/\\$releasever/Everything/\\$basearch/os/
-#metalink=https://mirrors.rpmfusion.org/metalink?repo=free-fedora-\\$releasever&arch=\\$basearch
-#enabled=1
-#metadata_expire=7d
-#gpgcheck=1
-#gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
-#
-#[rpmfusion-free-updates]
-#name=RPM Fusion for Fedora \\$releasever - Free - Updates
-##baseurl=http://download1.rpmfusion.org/free/fedora/updates/\\$releasever/\\$basearch/
-#metalink=https://mirrors.rpmfusion.org/metalink?repo=free-fedora-updates-released-\\$releasever&arch=\\$basearch
-#enabled=1
-#gpgcheck=1
-#gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
-#
-#[rpmfusion-free-tainted]
-#name=RPM Fusion for Fedora \\$releasever - Free
-##baseurl=http://download1.rpmfusion.org/free/fedora/tainted/\\$releasever/\\$basearch/debug/
-#metalink=https://mirrors.rpmfusion.org/metalink?repo=free-fedora-tainted-\\$releasever&arch=\\$basearch
-#enabled=1
-#metadata_expire=7d
-#gpgcheck=1
-#gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-\\$releasever
-#
-#[rpmfusion-nonfree]
-#name=RPM Fusion for Fedora \\$releasever - Nonfree
-#baseurl=http://download1.rpmfusion.org/nonfree/fedora/releases/\\$releasever/Everything/\\$basearch/os/
-#metalink=https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-\\$releasever&arch=\\$basearch
-#enabled=1
-#enabled_metadata=1
-#metadata_expire=14d
-#type=rpm-md
-#gpgcheck=1
-#repo_gpgcheck=0
-#gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
-#
-#[rpmfusion-nonfree-updates]
-#name=RPM Fusion for Fedora \\$releasever - Nonfree - Updates
-##baseurl=http://download1.rpmfusion.org/nonfree/fedora/updates/\\$releasever/\\$basearch/
-#metalink=https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-updates-released-\\$releasever&arch=\\$basearch
-#enabled=1
-#enabled_metadata=1
-#type=rpm-md
-#gpgcheck=1
-#repo_gpgcheck=0
-#gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
-#
-#[rpmfusion-nonfree-tainted]
-#name=RPM Fusion for Fedora \\$releasever - Nonfree tainted
-#baseurl=http://download1.rpmfusion.org/nonfree/fedora/tainted/\\$releasever/\\$basearch/
-#metalink=https://mirrors.rpmfusion.org/metalink?repo=nonfree-fedora-tainted-\\$releasever&arch=\\$basearch
-#enabled=1
-#metadata_expire=14d
-#type=rpm-md
-#gpgcheck=1
-#repo_gpgcheck=0
-#gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-\\$releasever
-
 [dragonfear]
 name=dragonfear
 baseurl=http://dnf-updates.dragonfear/fc\\$releasever/
@@ -549,6 +487,10 @@ function config_mocklock_qubes() {
 
     if [ "$release" == "q4.1" ] ; then
         local fedorareleasever=32
+        local qubeskeyver=4
+    elif [ "$release" == "q4.2" ] ; then
+        local fedorareleasever=37
+        local qubeskeyver=4.2
     else
         echo Do not know what the matching Fedora release version is for Qubes $release >&2
         exit 55
@@ -559,16 +501,14 @@ function config_mocklock_qubes() {
 config_opts['print_main_output'] = True
 
 config_opts['releasever'] = '$release'
-config_opts['nosync'] = False
 config_opts['fedorareleasever'] = '$fedorareleasever'
+config_opts['qubeskeyver'] = '$qubeskeyver'
 
 config_opts['target_arch'] = 'x86_64'
 config_opts['legal_host_arches'] = ('x86_64',)
 
 config_opts['basedir'] = '$basedir'
 config_opts['root'] = '$root'
-config_opts['cleanup_on_success'] = True
-config_opts['cleanup_on_failure'] = True
 
 config_opts['description'] = 'Qubes OS {{ releasever }}'
 
@@ -577,6 +517,11 @@ config_opts['chroot_setup_cmd'] = 'install systemd bash coreutils tar dnf qubes-
 config_opts['dist'] = 'q{{ releasever }}'
 config_opts['extra_chroot_dirs'] = [ '/run/lock', ]
 config_opts['isolation'] = 'simple'
+config_opts['plugin_conf']['ccache_enable'] = False
+config_opts['plugin_conf']['generate_completion_cache_enable'] = False
+# generates problems in f37+
+config_opts['plugin_conf']['nosync'] = False
+config_opts['use_bootstrap'] = False
 config_opts['package_manager'] = 'dnf'
 
 config_opts['dnf.conf'] = """
@@ -589,6 +534,8 @@ retries=20
 obsoletes=1
 gpgcheck=0
 assumeyes=1
+best=1
+module_platform_id=platform:f{{ fedorareleasever }}
 syslog_ident=mock
 syslog_device=
 install_weak_deps=0
@@ -620,7 +567,7 @@ skip_if_unavailable=False
 enabled = 1
 metadata_expire = 6h
 gpgcheck = 1
-gpgkey = file:///usr/share/distribution-gpg-keys/qubes/qubes-release-4-signing-key.asc
+gpgkey = file:///usr/share/distribution-gpg-keys/qubes/qubes-release-{{ qubeskeyver }}-signing-key.asc
 
 """
 EOF
@@ -665,7 +612,7 @@ function mocklock() {
         fi
 
         echo "Running process in mock jail" >&2
-        /usr/bin/mock -r "$cfgfile" "$@" < /dev/null
+        /usr/bin/mock --no-bootstrap-image -r "$cfgfile" "$@" < /dev/null
         exit $?
 
     ) 9> "$lockfile"
