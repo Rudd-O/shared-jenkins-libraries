@@ -216,7 +216,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 										// The Makefile.builder signifies we have to make an SRPM
 										// using make, and ignore setup.py, because this is a
 										// Qubes OS builder-powered project.
-										if (fileExists('setup.cfg') && !fileExists('setup.py')) {
+										if ((fileExists('setup.cfg') || fileExists('pyproject.toml')) && !fileExists('setup.py')) {
 											sh '''
 												set -e
 												rm -rf build dist
