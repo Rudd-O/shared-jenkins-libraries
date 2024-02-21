@@ -163,32 +163,38 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							script {
 								fileOperations([fileDeleteOperation(includes: 'xunit.xml')])
 								try {
-									if (test_step != null) {
-										dir('src') {
+									dir('src') {
+										if (test_step != null) {
 											test_step()
-										}
-									} else {
-										dir('src') {
-											sh '''
-											set -e
-											if grep -q ^mypy: Makefile ; then
-												make mypy
-											elif test -f mypy.ini ; then
-												pkgname=
-												if grep -q ^name setup.cfg ; then
-													pkgname=$(cat setup.cfg | grep ^name | head -1 | cut -d = -f 2)
-												elif test -f setup.py ; then
-													pkgname=$(python3 setup.py --name)
-												fi
-												if [ -n "$pkgname" ] ; then
-													MYPYPATH=lib:src mypy -p $pkgname
-												fi
-											fi
-											if test -f setup.py -o -f setup.cfg ; then
-												rm -f ../xunit.xml
-												pytest --junit-xml=../xunit.xml -o junit_logging=all
-											fi
-											'''
+										} else {
+											if (fileExists("Makefile") && readFile("Makefile").contains("mypy:")) {
+												sh(
+													script: "make mypy"
+												)
+											} else if (fileExists("mypy.ini")) {
+												sh(
+													script: '''
+													    pkgname=
+													    if grep -q ^name setup.cfg ; then
+														    pkgname=$(cat setup.cfg | grep ^name | head -1 | cut -d = -f 2)
+													    elif test -f setup.py ; then
+														    pkgname=$(python3 setup.py --name)
+													    fi
+													    if [ -n "$pkgname" ] ; then
+														    MYPYPATH=lib:src mypy -p $pkgname
+													    fi
+													''',
+													label: "run mypy directly"
+												)
+											}
+											if (fileExists("setup.py") || fileExists("setup.cfg")) {
+												sh(
+													script: '''
+													pytest --junit-xml=../xunit.xml -o junit_logging=all
+													''',
+													label: "run pytest"
+												)
+											}
 										}
 									}
 								} finally {
