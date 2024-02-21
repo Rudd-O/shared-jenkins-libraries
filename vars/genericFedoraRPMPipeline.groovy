@@ -125,7 +125,6 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								funcs.dnfInstall([
 									'rpm-build',
 									'which',
-									'pypipackage-to-srpm',
 									'shyaml',
 									'python3-pytest',
 									'python3',
@@ -260,8 +259,9 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 											'''
 										} else if (fileExists('pypipackage-to-srpm.yaml')) {
 											script {
-											def basename = funcs.downloadPypiPackageToSrpmSource()
-											funcs.buildDownloadedPypiPackage(basename)
+												sh 'echo "Standalone pypipackage-to-srpm builds are no longer supported.  Use specfile along YAML file instead." >&2 ; false'
+												// def basename = funcs.downloadPypiPackageToSrpmSource()
+												// funcs.buildDownloadedPypiPackage(basename)
 											}
 										} else {
 											sh 'make srpm'
