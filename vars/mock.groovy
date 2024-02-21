@@ -46,6 +46,7 @@ config_opts['plugin_conf']['root_cache_opts']['exclude_dirs'] = ['./proc', './sy
 config_opts['dnf.conf'] = """
 [main]
 keepcache=1
+debuglevel=0
 cachedir=/var/cache/yum
 reposdir=/dev/null
 logfile=/var/log/yum.log
@@ -133,7 +134,7 @@ config_opts['package_manager'] = 'dnf'
 config_opts['dnf.conf'] = """
 [main]
 keepcache=1
-debuglevel=1
+debuglevel=0
 reposdir=/dev/null
 logfile=/var/log/yum.log
 retries=20
