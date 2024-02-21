@@ -8,8 +8,8 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			parallelsAlwaysFailFast()
 		}
 		parameters {
-			string defaultValue: '', description: "Which Fedora releases:architectures to build for (empty means the job's default).", name: 'FEDORA_RELEASES', trim: true
-			string defaultValue: '', description: "Which Qubes OS releases:architectures to build for (empty means the job's default).", name: 'QUBES_RELEASES', trim: true
+			string defaultValue: 'default', description: "Which Fedora releases:architectures to build for ('default' means the job's default).", name: 'FEDORA_RELEASES', trim: true
+			string defaultValue: 'default', description: "Which Qubes OS releases:architectures to build for ('default' means the job's default).", name: 'QUBES_RELEASES', trim: true
 		}
 		stages {
 			stage("Prep on master") {
@@ -63,12 +63,12 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									println checkout_step
 									checkout_step()
 								}
-								if (params.FEDORA_RELEASES != '') {
+								if (params.FEDORA_RELEASES != 'default') {
 									env.FEDORA_RELEASES = params.FEDORA_RELEASES
 								} else {
 									env.FEDORA_RELEASES = funcs.loadParameter('FEDORA_RELEASES', env.DEFAULT_FEDORA_RELEASES)
 								}
-								if (params.QUBES_RELEASES != '') {
+								if (params.QUBES_RELEASES != 'default') {
 									env.QUBES_RELEASES = params.QUBES_RELEASES
 								} else {
 									env.QUBES_RELEASES = funcs.loadParameter('QUBES_RELEASES', env.DEFAULT_QUBES_RELEASES)
@@ -265,9 +265,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									}
 								}
 							}
-							dir('out') {
-								deleteDir()
-							}
+							stash includes: 'src/*.src.rpm', name: 'srpm'
 						}
 					}
 					stage('RPMs') {
@@ -281,18 +279,34 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									if (distroandrelease[1] != "") {
 										distroandrelease[1].split(" ").each {
 											parallelized["${distroandrelease[0]} ${it}"] = {
-												automock(distroandrelease[0], it)
+												node('mock') {
+													dir('src') {
+														deleteDir()
+													}
+													dir('out') {
+														deleteDir()
+													}
+													unstash 'srpm'
+													sh "pwd ; ls -lR src ; date"
+													automock(distroandrelease[0], it)
+													stash includes: 'out/*/*.rpm', name: "out-${distroandrelease[0]} ${it}"
+												}
 											}
 										}
 									}
 								}
 								parallel parallelized
+								dir('out') {
+									deleteDir()
+								}
+								// TODO efficiency: save the list of labels to a text file.
+								// Stash that.  Then unstash all labels in "Finish on master"
+								// based on the contents of the text file.
+								parallelized.each {
+									label, closure -> unstash "out-${label}"
+								}
+								stash includes: 'out/*/*.rpm', name: 'out'
 							}
-						}
-					}
-					stage('Stash') {
-						steps {
-							stash includes: 'out/*/*.rpm', name: 'out'
 						}
 					}
 				}
@@ -340,7 +354,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								    >&2 echo "$errout"
 								    return $ret
 								}
-								GPG_NAME=$( gpg2 --list-keys | egrep '^      ([ABCDEF0-9])*$' | head -1 )
+								GPG_NAME=$( gpg2 --list-keys | grep -E '^      ([ABCDEF0-9])*$' | head -1 )
 								>&2 echo "Signing package $1."
 								errout=$(rpm --addsign \
 								    --define "%_gpg_name $GPG_NAME" \
