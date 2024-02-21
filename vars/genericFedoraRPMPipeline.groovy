@@ -94,27 +94,38 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							}
 							script {
 								env.BUILD_DATE = sh(
-									script: "date +%Y.%m.%d",
-									returnStdout: true
+									script: """
+									#!/bin/bash
+									date +%Y.%m.%d
+									""".stripIndent().trim(),
+									returnStdout: true,
+									label: "Get date"
 								).trim()
 								env.BUILD_SRC_SHORT_COMMIT = sh(
-									script: "cd src && git rev-parse --short HEAD",
-									returnStdout: true
+									script: """
+									#!/bin/bash
+									cd src && git rev-parse --short HEAD
+									""".stripIndent().trim(),
+									returnStdout: true,
+									label: "Get short commit"
 								).trim()
 								env.BUILD_UPSTREAM_SHORT_COMMIT = sh(
 									script: '''
-										for a in upstream/*
-										do
-											if test -d "$a" && test -d "$a"/.git
-											then
-												oldpwd=$(pwd)
-												cd "$a"
-												git rev-parse --short HEAD
-												cd "$oldpwd"
-											fi
-										done
-									''',
-									returnStdout: true
+									#!/bin/bash -e
+									for a in upstream/*
+									do
+										if test -d "$a" && test -d "$a"/.git
+										then
+											oldpwd=$(pwd)
+											cd "$a"
+											git rev-parse --short HEAD
+											cd "$oldpwd"
+										fi
+									done
+									'''.stripIndent().trim(),
+									returnStdout: true,
+									label: "Get upstreams' short commits"
+
 								).trim()
 							}
 							updateBuildNumberDisplayName()
@@ -284,7 +295,6 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								deleteDir()
 							}
 							script {
-								println "Building RPMs for releases ${env.RELEASE}"
 								parallel automockrpms_all(env.RELEASE.split(' '))
 							}
 						}
@@ -309,53 +319,57 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					}
 					stage('Sign') {
 						steps {
-							sh '''#!/bin/bash -e
-							olddir="$PWD"
-							cd "$JENKINS_HOME"
-							PRIVKEY=
-							if test -d rpm-sign ; then
-							for f in rpm-sign/RPM-GPG-KEY-*.private.asc ; do
-							    if test -f "$f" ; then
-							    PRIVKEY="$PWD"/"$f"
-							    break
-							    fi
-							done
-							fi
-							if [ "$PRIVKEY" == "" ] ; then
-							>&2 echo error: could not find PRIVKEY in rpm-sign/, aborting
-							exit 40
-							fi
-							cd "$olddir"
-							sign() {
-							if [ -z "$tmpdir" ] ; then
-							    tmpdir=$(mktemp -d)
-							    trap 'echo rm -rf "$tmpdir"' EXIT
-							fi
-							export GNUPGHOME="$tmpdir"
-							errout=$(gpg2 --import < "$PRIVKEY" 2>&1) || {
-							    ret=$?
-							    >&2 echo "$errout"
-							    return $ret
-							}
-							GPG_NAME=$( gpg2 --list-keys | egrep '^      ([ABCDEF0-9])*$' | head -1 )
-							>&2 echo "Signing package $1."
-							errout=$(rpm --addsign \
-							    --define "%_gpg_name $GPG_NAME" \
-							    --define '_signature gpg' \
-							    --define '_gpgbin /usr/bin/gpg2' \
-							    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
-							    "$1" 2>&1) || {
-							    ret=$?
-							    >&2 echo "$errout"
-							    return $ret
-							}
-							rpm -K "$1" || true
-							rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
-							}
-							for rpm in out/*/*.rpm ; do
-							sign "$rpm"
-							done
-							'''
+							sh(
+								script: '''
+								#!/bin/bash -e
+								olddir="$PWD"
+								cd "$JENKINS_HOME"
+								PRIVKEY=
+								if test -d rpm-sign ; then
+								for f in rpm-sign/RPM-GPG-KEY-*.private.asc ; do
+								    if test -f "$f" ; then
+								    PRIVKEY="$PWD"/"$f"
+								    break
+								    fi
+								done
+								fi
+								if [ "$PRIVKEY" == "" ] ; then
+								>&2 echo error: could not find PRIVKEY in rpm-sign/, aborting
+								exit 40
+								fi
+								cd "$olddir"
+								sign() {
+								if [ -z "$tmpdir" ] ; then
+								    tmpdir=$(mktemp -d)
+								    trap 'echo rm -rf "$tmpdir"' EXIT
+								fi
+								export GNUPGHOME="$tmpdir"
+								errout=$(gpg2 --import < "$PRIVKEY" 2>&1) || {
+								    ret=$?
+								    >&2 echo "$errout"
+								    return $ret
+								}
+								GPG_NAME=$( gpg2 --list-keys | egrep '^      ([ABCDEF0-9])*$' | head -1 )
+								>&2 echo "Signing package $1."
+								errout=$(rpm --addsign \
+								    --define "%_gpg_name $GPG_NAME" \
+								    --define '_signature gpg' \
+								    --define '_gpgbin /usr/bin/gpg2' \
+								    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
+								    "$1" 2>&1) || {
+								    ret=$?
+								    >&2 echo "$errout"
+								    return $ret
+								}
+								rpm -K "$1" || true
+								rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
+								}
+								for rpm in out/*/*.rpm ; do
+								sign "$rpm"
+								done
+								'''.stripIndent().trim(),
+								label: "Sign RPMs."
+							)
 						}
 					}
 					stage('Archive') {

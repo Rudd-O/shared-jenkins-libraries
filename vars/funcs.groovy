@@ -87,23 +87,30 @@ def getrpmpatches(String filename) {
 def dnfInstall(deps) {
     deps = deps.collect { shellQuote(it) }
     deps = deps.join(' ')
-    sh """#!/bin/bash -xe
+    sh(
+        script: """#!/bin/bash -e
           (
               flock 9
-              sudo dnf install --disablerepo='*qubes*' --disableplugin='*qubes*' -qy ${deps}
-              sudo dnf upgrade --disablerepo='*qubes*' --disableplugin='*qubes*' -qy ${deps}
+              rpm -q ${deps} || sudo dnf install --disablerepo='*qubes*' --disableplugin='*qubes*' -qy ${deps}
           ) 9> /tmp/\$USER-dnf-lock
-     """
+        """,
+        label: "Installing RPM dependencies ${deps}"
+    )
 }
 
 def aptInstall(deps) {
-  sh """#!/bin/bash -e
+    deps = deps.collect { shellQuote(it) }
+    deps = deps.join(' ')
+    sh(
+        script: """#!/bin/bash -e
      (
          flock 9
          deps="${deps.join(' ')}"
          dpkg-query -s \$deps >/dev/null || { sudo apt-get -q update && sudo apt-get -y install \$deps ; }
      ) 9> /tmp/\$USER-apt-lock
-     """
+     """,
+        label: "Installing APT dependencies ${deps}"
+    )
 }
 
 def aptEnableSrc() {
@@ -643,7 +650,6 @@ def automockrpms(String myRelease) {
             release = myRelease
             arch = "x86_64"
     }
-    println "Release detected: ${release}.  Arch detected: ${arch}."
     def detected = sh(
         script: '''#!/bin/sh -e
         for file in src/*.src.rpm ; do
@@ -654,12 +660,7 @@ def automockrpms(String myRelease) {
         returnStdout: true,
         label: "Check we have source RPMs."
     ).trim().split("\n")
-    println "We have found the following source RPMs: " + detected.join(", ")
     dir("out/${release}") {
-        sh(
-            script: 'echo Created out directory $PWD. >&2',
-            label: "Create out directory for this release."
-        )
     }
     ArrayList args = [
         "--define=build_number ${BUILD_NUMBER}",

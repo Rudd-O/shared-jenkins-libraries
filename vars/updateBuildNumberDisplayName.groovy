@@ -1,18 +1,20 @@
 def call() {
 	def buildName = sh(
-		script: '''#!/bin/sh
-			for a in . src upstream upstream/*
-			do
-				if test -d "$a" && test -d "$a"/.git
-				then
-					oldpwd=$(pwd)
-					cd "$a"
-					echo -n "$a " ; git log --oneline -n 1
-					cd "$oldpwd"
-				fi
-			done
-		''',
-		returnStdout: true
+		script: '''
+		#!/bin/sh
+		for a in . src upstream upstream/*
+		do
+			if test -d "$a" && test -d "$a"/.git
+			then
+				oldpwd=$(pwd)
+				cd "$a"
+				echo -n "$a " ; git log --oneline -n 1
+				cd "$oldpwd"
+			fi
+		done
+		'''.stripIndent().trim(),
+		returnStdout: true,
+		label: "Generate build name"
 	).trim().split("\n")
 	descs = []
 	dns = []
