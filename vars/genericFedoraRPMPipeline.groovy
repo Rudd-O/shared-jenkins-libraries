@@ -1,28 +1,3 @@
-def automockrpms_all(releases) {
-    def parallelized = funcs.combo(
-        {
-            return {
-				def n = "RPMs for Fedora ${it[0]}"
-				if (it[0].startsWith("q")) {
-					n = "RPMs for Qubes OS ${it[0]}"
-				}
-                stage(n) {
-                    script {
-                        funcs.automockrpms(it[0])
-                    }
-                }
-            }
-        },
-        [releases]
-    )
-    parallelized.failFast = true
-    return parallelized
-}
-
-def autouploadrpms(myRelease) {
-	sh("/var/lib/jenkins/userContent/upload-deliverables out/*")
-}
-
 def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = null, Closure integration_step = null, Closure test_step = null) {
 	pipeline {
 		agent none
@@ -30,9 +5,11 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			skipDefaultCheckout()
 			buildDiscarder(logRotator(numToKeepStr: '50', artifactNumToKeepStr: '1'))
 			copyArtifactPermission('/zfs-fedora-installer/*')
+			parallelsAlwaysFailFast()
 		}
 		parameters {
-			string defaultValue: '', description: "Which releases to build for (empty means the job's default).", name: 'RELEASE', trim: true
+			string defaultValue: '', description: "Which Fedora releases:architectures to build for (empty means the job's default).", name: 'FEDORA_RELEASES', trim: true
+			string defaultValue: '', description: "Which Qubes OS releases:architectures to build for (empty means the job's default).", name: 'QUBES_RELEASES', trim: true
 		}
 		stages {
 			stage("Prep on master") {
@@ -40,9 +17,6 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 				stages {
 					stage('Begin') {
 						steps {
-							script{
-								env.RELEASE = params.RELEASE
-							}
 							copyArtifacts(
 								projectName: 'get-fedora-releases',
 								selector: upstream(fallbackToLastSuccessful: true)
@@ -50,6 +24,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							dir("releases") {
 								script {
 									env.DEFAULT_FEDORA_RELEASES = readFile('fedora').trim()
+									env.DEFAULT_QUBES_RELEASES = "" // We don't build for Qubes OS by default.
 								}
 								deleteDir()
 							}
@@ -82,17 +57,22 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								])
 							}
 							script {
-								if (params.RELEASE == '') {
-									env.RELEASE = funcs.loadParameter('RELEASE', env.DEFAULT_FEDORA_RELEASES)
-								}
 								env.PUBLISH_TO_REPO = funcs.loadParameter('PUBLISH_TO_REPO', '')
 								if (checkout_step != null) {
 									println "Executing custom checkout step."
 									println checkout_step
 									checkout_step()
 								}
-							}
-							script {
+								if (params.FEDORA_RELEASES != '') {
+									env.FEDORA_RELEASES = params.FEDORA_RELEASES
+								} else {
+									env.FEDORA_RELEASES = funcs.loadParameter('FEDORA_RELEASES', env.DEFAULT_FEDORA_RELEASES)
+								}
+								if (params.QUBES_RELEASES != '') {
+									env.QUBES_RELEASES = params.QUBES_RELEASES
+								} else {
+									env.QUBES_RELEASES = funcs.loadParameter('QUBES_RELEASES', env.DEFAULT_QUBES_RELEASES)
+								}
 								env.BUILD_DATE = sh(
 									script: """
 									#!/bin/bash
@@ -230,72 +210,83 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									srpm_step()
 								} else {
 									dir('src') {
-										// The Makefile.builder signifies we have to make an SRPM
-										// using make, and ignore setup.py, because this is a
-										// Qubes OS builder-powered project.
 										if (fileExists('setup.cfg') && !fileExists('setup.py')) {
-											sh '''
+											sh(
+												script: '''
 												set -e
 												rm -rf build dist
 												python=python3
 												$python -m build --sdist
 												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
 												rm -rf build dist *.egg-info
-											'''
+												''',
+												label: "Build SRPM with python -m build"
+											)
 										} else if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
-											sh '''
+											// The Makefile.builder signifies we have to make an SRPM
+											// using make, and ignore setup.py, because this is a
+											// Qubes OS builder-powered project.
+											sh(
+												script: '''
 												set -e
 												rm -rf build dist
-											relnum=$(rpm -qa 'fedora-release*' --queryformat '%{version}\n' | head -1)
-												if head -1 setup.py | grep -q python3 ; then
-													python=python3
-												elif head -1 setup.py | grep -q python2 ; then
-													python=python2
-												elif [ "$relnum" > 28 ] ; then
-													python=python3
-												else
-													python=python2
-												fi
-												$python setup.py sdist
+												python3 setup.py sdist
 												specs=$(ls -1 *.spec || true)
 												if [ "$specs" != "" ] ; then
 													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
 												else
-													$python setup.py bdist_rpm --spec-only
+													python3 setup.py bdist_rpm --spec-only
 													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs dist/*.spec
 												fi
 												rm -rf build dist *.egg-info
-											'''
+												''',
+												label: "Build SRPM with python sdist/bdist_rpm"
+											)
 										} else if (fileExists('pypipackage-to-srpm.yaml') && sh(
 											script: "ls *.spec || true",
-											returnStdout: true
+											returnStdout: true,
+											label: "Find specfiles"
 										).trim().contains("spec")) {
 											funcs.downloadPypiPackageToSrpmSource()
-											sh '''
+											sh(
+												script: '''
 												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir ./" -bs *.spec
 												rm -rf build dist *.egg-info
-											'''
+												''',
+												label: "Build SRPM from PyPI source and local specfile",
+											)
 										} else if (fileExists('pypipackage-to-srpm.yaml')) {
-											script {
-												sh 'echo "Standalone pypipackage-to-srpm builds are no longer supported.  Use specfile along YAML file instead." >&2 ; false'
-												// def basename = funcs.downloadPypiPackageToSrpmSource()
-												// funcs.buildDownloadedPypiPackage(basename)
-											}
+											sh 'echo "Standalone pypipackage-to-srpm builds are no longer supported.  Use specfile along YAML file instead." >&2 ; false'
+											// def basename = funcs.downloadPypiPackageToSrpmSource()
+											// funcs.buildDownloadedPypiPackage(basename)
 										} else {
 											sh 'make srpm'
 										}
 									}
 								}
 							}
+							dir('out') {
+								deleteDir()
+							}
 						}
 					}
 					stage('RPMs') {
 						steps {
-							dir('out') {
-								deleteDir()
-							}
 							script {
-								parallel automockrpms_all(env.RELEASE.split(' '))
+								parallelized = [:]
+								[
+									["Fedora", env.FEDORA_RELEASES],
+									["Qubes OS", env.QUBES_RELEASES]
+								].each { distroandrelease ->
+									if (distroandrelease[1] != "") {
+										distroandrelease[1].split(" ").each {
+											parallelized["${distroandrelease[0]} ${it}"] = {
+												automock(distroandrelease[0], it)
+											}
+										}
+									}
+								}
+								parallel parallelized
 							}
 						}
 					}
@@ -398,7 +389,10 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 						steps {
 							lock('autouploadrpms') {
 								script {
-									autouploadrpms()
+									sh(
+										script: "/var/lib/jenkins/userContent/upload-deliverables out/*",
+										label: "Upload deliverables"
+									)
 								}
 							}
 						}

@@ -29,8 +29,11 @@ def call() {
 	}
 	if (dns.size() > 0) {
 		currentBuild.displayName = "#" + env.BUILD_NUMBER + ": " + dns.join(" / ")
-		if (env.RELEASE != null && env.RELEASE != "") {
-                    currentBuild.displayName = currentBuild.displayName + " for " + env.RELEASE
+		if (env.FEDORA_RELEASES != null && env.FEDORA_RELEASES != "") {
+                    currentBuild.displayName = currentBuild.displayName + " — Fedora " + env.FEDORA_RELEASES
+		}
+		if (env.QUBES_RELEASES != null && env.QUBES_RELEASES != "") {
+                    currentBuild.displayName = currentBuild.displayName + " — Qubes OS " + env.QUBES_RELEASES
 		}
 	}
 	if (descs.size() > 0) {
