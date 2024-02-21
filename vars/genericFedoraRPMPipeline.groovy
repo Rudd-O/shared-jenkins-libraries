@@ -8,8 +8,8 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			parallelsAlwaysFailFast()
 		}
 		parameters {
-			string defaultValue: 'default', description: "Which Fedora releases:architectures to build for ('default' means the job's default).", name: 'FEDORA_RELEASES', trim: true
-			string defaultValue: 'default', description: "Which Qubes OS releases:architectures to build for ('default' means the job's default).", name: 'QUBES_RELEASES', trim: true
+			string defaultValue: 'default', description: "Which Fedora releases[:architectures] to build for, separated by spaces; 'default' means the job's default.", name: 'FEDORA_RELEASES', trim: true
+			string defaultValue: 'default', description: "Which Qubes OS releases[:architectures] to build for, separated by spaces; 'default' means the job's default.", name: 'QUBES_RELEASES', trim: true
 		}
 		stages {
 			stage("Prep on master") {
@@ -161,8 +161,8 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					stage('Test') {
 						steps {
 							script {
+								fileOperations([fileDeleteOperation(includes: 'xunit.xml')])
 								try {
-									sh "rm -f xunit.xml"
 									if (test_step != null) {
 										dir('src') {
 											test_step()
@@ -283,12 +283,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								distroandrelease[1].split(" ").each {
 									parallelized["${distroandrelease[0]} ${it}"] = {
 										node('mock') {
-											dir('src') {
-												deleteDir()
-											}
-											dir('out') {
-												deleteDir()
-											}
+											deleteDir()
 											unstash 'srpm'
 											sh "pwd ; ls -lR src ; date"
 											automock(distroandrelease[0], it)
@@ -299,20 +294,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							}
 						}
 						parallel parallelized
-						/*dir('out') {
-							deleteDir()
-						}
-						// TODO efficiency: save the list of labels to a text file.
-						// Stash that.  Then unstash all labels in "Finish on master"
-						// based on the contents of the text file.
-						parallelized.each {
-							label, closure -> unstash "out-${label}"
-						}
-						stash includes: 'out/*SLASH*.rpm', name: 'out'
-						*/
-					}
-					script {
-						throw new Exception("early stop")
+						env.STASHES = parallelized.keySet().join("\n")
 					}
 				}
 			}
@@ -324,7 +306,11 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							dir("out") {
 								deleteDir()
 							}
-							unstash 'out'
+							script {
+								env.STASHES.split("\n").each {
+									unstash "out-${it}"
+								}
+							}
 						}
 					}
 					stage('Sign') {
