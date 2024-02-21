@@ -114,7 +114,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					}
 				}
 			}
-			stage('Dispatch on slave') {
+			stage('Prep on slave') {
 				agent { label 'mock' }
 				stages {
 					stage('Deps') {
@@ -268,46 +268,51 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							stash includes: 'src/*.src.rpm', name: 'srpm'
 						}
 					}
-					stage('RPMs') {
-						steps {
-							script {
-								parallelized = [:]
-								[
-									["Fedora", env.FEDORA_RELEASES],
-									["Qubes OS", env.QUBES_RELEASES]
-								].each { distroandrelease ->
-									if (distroandrelease[1] != "") {
-										distroandrelease[1].split(" ").each {
-											parallelized["${distroandrelease[0]} ${it}"] = {
-												node('mock') {
-													dir('src') {
-														deleteDir()
-													}
-													dir('out') {
-														deleteDir()
-													}
-													unstash 'srpm'
-													sh "pwd ; ls -lR src ; date"
-													automock(distroandrelease[0], it)
-													stash includes: 'out/*/*.rpm', name: "out-${distroandrelease[0]} ${it}"
-												}
+				}
+			}
+			stage('Build') {
+				agent none
+				steps {
+					script {
+						parallelized = [:]
+						[
+							["Fedora", env.FEDORA_RELEASES],
+							["Qubes OS", env.QUBES_RELEASES]
+						].each { distroandrelease ->
+							if (distroandrelease[1] != "") {
+								distroandrelease[1].split(" ").each {
+									parallelized["${distroandrelease[0]} ${it}"] = {
+										node('mock') {
+											dir('src') {
+												deleteDir()
 											}
+											dir('out') {
+												deleteDir()
+											}
+											unstash 'srpm'
+											sh "pwd ; ls -lR src ; date"
+											automock(distroandrelease[0], it)
+											stash includes: 'out/*/*.rpm', name: "out-${distroandrelease[0]} ${it}"
 										}
 									}
 								}
-								parallel parallelized
-								dir('out') {
-									deleteDir()
-								}
-								// TODO efficiency: save the list of labels to a text file.
-								// Stash that.  Then unstash all labels in "Finish on master"
-								// based on the contents of the text file.
-								parallelized.each {
-									label, closure -> unstash "out-${label}"
-								}
-								stash includes: 'out/*/*.rpm', name: 'out'
 							}
 						}
+						parallel parallelized
+						/*dir('out') {
+							deleteDir()
+						}
+						// TODO efficiency: save the list of labels to a text file.
+						// Stash that.  Then unstash all labels in "Finish on master"
+						// based on the contents of the text file.
+						parallelized.each {
+							label, closure -> unstash "out-${label}"
+						}
+						stash includes: 'out/*SLASH*.rpm', name: 'out'
+						*/
+					}
+					script {
+						throw new Exception("early stop")
 					}
 				}
 			}
