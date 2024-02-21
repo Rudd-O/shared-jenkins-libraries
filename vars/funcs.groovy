@@ -194,7 +194,7 @@ def loadParameter(name, defaultValue) {
             // println "Could not load from ${path}"
         }
     }
-    println "Could not find parameter ${name}, returning default ${defaultValue}"
+    println "Loaded parameter ${name}=${defaultValue} from default"
     return defaultValue
 }
 
