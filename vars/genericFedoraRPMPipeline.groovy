@@ -48,6 +48,19 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					script{
 						env.RELEASE = params.RELEASE
 					}
+					copyArtifacts(
+						projectName: 'get-fedora-releases',
+						selector: upstream(fallbackToLastSuccessful: true)
+					)
+					dir("releases") {
+						script {
+							env.DEFAULT_FEDORA_RELEASES = sh(
+								script: 'cat fedora',
+								returnStdout: true
+							).trim()
+						}
+						deleteDir()
+					}
 					script {
 						announceBeginning()
 						funcs.durable()
@@ -78,7 +91,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					}
 					script {
 						if (params.RELEASE == '') {
-							env.RELEASE = funcs.loadParameter('RELEASE', '30')
+							env.RELEASE = funcs.loadParameter('RELEASE', env.DEFAULT_FEDORA_RELEASES)
 						}
 						env.PUBLISH_TO_REPO = funcs.loadParameter('PUBLISH_TO_REPO', '')
 						if (checkout_step != null) {
