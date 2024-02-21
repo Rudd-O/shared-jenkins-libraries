@@ -223,7 +223,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 												python=python3
 												$python -m build --sdist
 												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
-												rm -rf build dist
+												rm -rf build dist *.egg-info
 											'''
 										} else if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
 											sh '''
@@ -247,14 +247,17 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 													$python setup.py bdist_rpm --spec-only
 													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs dist/*.spec
 												fi
-												rm -rf build dist
+												rm -rf build dist *.egg-info
 											'''
 										} else if (fileExists('pypipackage-to-srpm.yaml') && sh(
 											script: "ls *.spec || true",
 											returnStdout: true
 										).trim().contains("spec")) {
 											funcs.downloadPypiPackageToSrpmSource()
-											sh 'rpmbuild --define "_srcrpmdir ./" --define "_sourcedir ./" -bs *.spec'
+											sh '''
+												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir ./" -bs *.spec
+												rm -rf build dist *.egg-info
+											'''
 										} else if (fileExists('pypipackage-to-srpm.yaml')) {
 											script {
 											def basename = funcs.downloadPypiPackageToSrpmSource()
