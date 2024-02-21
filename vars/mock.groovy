@@ -234,13 +234,6 @@ function mocklock() {
 }
 
 def call(String distro, String release, String arch, ArrayList args, ArrayList srpms) {
-    if (distro == "Fedora") {
-        release = "fc" + release
-    } else if (distro == "Qubes OS") {
-        release = "q" + release
-    } else {
-        throw new Exception("Unknown distro ${distro}")
-    }
     def quotedargs = args.collect{ shellQuote(it) }.join(" ")
     for (srpm in srpms) {
         def mocklock = "mocklock " + release + " " + arch + " " + quotedargs + " " + shellQuote(srpm)

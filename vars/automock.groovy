@@ -10,6 +10,13 @@ def call(String distro, String myRelease) {
             release = myRelease
             arch = "x86_64"
     }
+    if (distro == "Fedora") {
+        release = "fc" + release
+    } else if (distro == "Qubes OS") {
+        release = "q" + release
+    } else {
+        throw new Exception("Unknown distro ${distro}")
+    }
     ArrayList srpms = findFiles(glob: 'src/*.src.rpm').collect { it.getPath() }
     if (srpms.size() == 0) {
         throw new Exception("No source RPMs found")
