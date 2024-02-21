@@ -54,10 +54,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					)
 					dir("releases") {
 						script {
-							env.DEFAULT_FEDORA_RELEASES = sh(
-								script: 'cat fedora',
-								returnStdout: true
-							).trim()
+							env.DEFAULT_FEDORA_RELEASES = readFile('fedora').trim()
 						}
 						deleteDir()
 					}
