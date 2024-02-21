@@ -177,11 +177,8 @@ def loadParameter(name, defaultValue) {
     defaultsScript = [:]
     def paths = [
       env.WORKSPACE + "/src/" + "build.parameters",
-      env.WORKSPACE + "/" + "build.parameters",
-      env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME + ".parameters",
-      env.JENKINS_HOME + "/jobdsl/" + env.JOB_NAME.split("/")[0] + ".parameters",
     ]
-    println "Loading parameter ${name} from paths ${paths}."
+    // println "Loading parameter ${name} from paths ${paths}."
     for (path in paths) {
         try {
             defaultsScript = shell.parse(new File(path)).run()
