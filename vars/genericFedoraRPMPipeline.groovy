@@ -276,7 +276,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					}
 				}
 			}
-			stage('Build') {
+			stage('Package') {
 				agent none
 				steps {
 					script {
