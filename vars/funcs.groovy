@@ -194,7 +194,7 @@ def loadParameter(name, defaultValue) {
             }
         }
         catch(IOException ex){
-            println "Could not load from ${path}"
+            // println "Could not load from ${path}"
         }
     }
     println "Could not find parameter ${name}, returning default ${defaultValue}"
