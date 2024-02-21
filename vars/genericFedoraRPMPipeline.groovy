@@ -25,108 +25,105 @@ def autouploadrpms(myRelease) {
 
 def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = null, Closure integration_step = null, Closure test_step = null) {
 	pipeline {
-
-		agent { label 'master' }
-
-//		triggers {
-//			pollSCM('H H * * *')
-//		}
-
+		agent none
 		options {
 			skipDefaultCheckout()
 			buildDiscarder(logRotator(numToKeepStr: '50', artifactNumToKeepStr: '1'))
 			copyArtifactPermission('/zfs-fedora-installer/*')
 		}
-
 		parameters {
 			string defaultValue: '', description: "Which releases to build for (empty means the job's default).", name: 'RELEASE', trim: true
 		}
-
 		stages {
-			stage('Begin') {
-				steps {
-					script{
-						env.RELEASE = params.RELEASE
-					}
-					copyArtifacts(
-						projectName: 'get-fedora-releases',
-						selector: upstream(fallbackToLastSuccessful: true)
-					)
-					dir("releases") {
-						script {
-							env.DEFAULT_FEDORA_RELEASES = readFile('fedora').trim()
+			stage("Prep on master") {
+				agent { label 'master' }
+				stages {
+					stage('Begin') {
+						steps {
+							script{
+								env.RELEASE = params.RELEASE
+							}
+							copyArtifacts(
+								projectName: 'get-fedora-releases',
+								selector: upstream(fallbackToLastSuccessful: true)
+							)
+							dir("releases") {
+								script {
+									env.DEFAULT_FEDORA_RELEASES = readFile('fedora').trim()
+								}
+								deleteDir()
+							}
+							script {
+							//	announceBeginning()
+								funcs.durable()
+							}
 						}
-						deleteDir()
 					}
-					script {
-						announceBeginning()
-						funcs.durable()
+					stage('Checkout') {
+						steps {
+							dir('out') {
+								deleteDir()
+							}
+							dir('src') {
+								checkout([
+									$class: 'GitSCM',
+									branches: scm.branches,
+									extensions: [
+										[$class: 'CleanBeforeCheckout'],
+										[
+											$class: 'SubmoduleOption',
+											disableSubmodules: false,
+											parentCredentials: false,
+											recursiveSubmodules: true,
+											trackingSubmodules: false
+										],
+									],
+									userRemoteConfigs: scm.userRemoteConfigs
+								])
+							}
+							script {
+								if (params.RELEASE == '') {
+									env.RELEASE = funcs.loadParameter('RELEASE', env.DEFAULT_FEDORA_RELEASES)
+								}
+								env.PUBLISH_TO_REPO = funcs.loadParameter('PUBLISH_TO_REPO', '')
+								if (checkout_step != null) {
+									println "Executing custom checkout step."
+									println checkout_step
+									checkout_step()
+								}
+							}
+							script {
+								env.BUILD_DATE = sh(
+									script: "date +%Y.%m.%d",
+									returnStdout: true
+								).trim()
+								env.BUILD_SRC_SHORT_COMMIT = sh(
+									script: "cd src && git rev-parse --short HEAD",
+									returnStdout: true
+								).trim()
+								env.BUILD_UPSTREAM_SHORT_COMMIT = sh(
+									script: '''
+										for a in upstream/*
+										do
+											if test -d "$a" && test -d "$a"/.git
+											then
+												oldpwd=$(pwd)
+												cd "$a"
+												git rev-parse --short HEAD
+												cd "$oldpwd"
+											fi
+										done
+									''',
+									returnStdout: true
+								).trim()
+							}
+							updateBuildNumberDisplayName()
+							stash includes: '**', name: 'source', useDefaultExcludes: false
+						}
 					}
 				}
 			}
-			stage('Checkout') {
-				steps {
-					dir('out') {
-						deleteDir()
-					}
-					dir('src') {
-						checkout([
-							$class: 'GitSCM',
-							branches: scm.branches,
-							extensions: [
-								[$class: 'CleanBeforeCheckout'],
-								[
-									$class: 'SubmoduleOption',
-									disableSubmodules: false,
-									parentCredentials: false,
-									recursiveSubmodules: true,
-									trackingSubmodules: false
-								],
-							],
-							userRemoteConfigs: scm.userRemoteConfigs
-						])
-					}
-					script {
-						if (params.RELEASE == '') {
-							env.RELEASE = funcs.loadParameter('RELEASE', env.DEFAULT_FEDORA_RELEASES)
-						}
-						env.PUBLISH_TO_REPO = funcs.loadParameter('PUBLISH_TO_REPO', '')
-						if (checkout_step != null) {
-							println "Executing custom checkout step."
-							println checkout_step
-							checkout_step()
-						}
-					}
-					script {
-						env.BUILD_DATE = sh(
-							script: "date +%Y.%m.%d",
-							returnStdout: true
-						).trim()
-						env.BUILD_SRC_SHORT_COMMIT = sh(
-							script: "cd src && git rev-parse --short HEAD",
-							returnStdout: true
-						).trim()
-						env.BUILD_UPSTREAM_SHORT_COMMIT = sh(
-							script: '''
-								for a in upstream/*
-								do
-									if test -d "$a" && test -d "$a"/.git
-									then
-										oldpwd=$(pwd)
-										cd "$a"
-										git rev-parse --short HEAD
-										cd "$oldpwd"
-									fi
-								done
-							''',
-							returnStdout: true
-						).trim()
-					}
-					updateBuildNumberDisplayName()
-					stash includes: '**', name: 'source', useDefaultExcludes: false
-				}
-			}
-			stage('Dispatch') {
+			stage('Dispatch on slave') {
 				agent { label 'mock' }
 				stages {
 					stage('Deps') {
@@ -299,103 +296,108 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					}
 				}
 			}
-			stage('Unstash') {
-				steps {
-					dir("out") {
-						deleteDir()
+			stage('Finish on master') {
+				agent { label 'master' }
+				stages{
+					stage('Unstash') {
+						steps {
+							dir("out") {
+								deleteDir()
+							}
+							unstash 'out'
+						}
 					}
-					unstash 'out'
-				}
-			}
-			stage('Sign') {
-				steps {
-					sh '''#!/bin/bash -e
-					olddir="$PWD"
-					cd "$JENKINS_HOME"
-					PRIVKEY=
-					if test -d rpm-sign ; then
-					  for f in rpm-sign/RPM-GPG-KEY-*.private.asc ; do
-					    if test -f "$f" ; then
-					      PRIVKEY="$PWD"/"$f"
-					      break
-					    fi
-					  done
-					fi
-					if [ "$PRIVKEY" == "" ] ; then
-					  >&2 echo error: could not find PRIVKEY in rpm-sign/, aborting
-					  exit 40
-					fi
-					cd "$olddir"
-					sign() {
-					  if [ -z "$tmpdir" ] ; then
-					    tmpdir=$(mktemp -d)
-					    trap 'echo rm -rf "$tmpdir"' EXIT
-					  fi
-					  export GNUPGHOME="$tmpdir"
-					  errout=$(gpg2 --import < "$PRIVKEY" 2>&1) || {
-					    ret=$?
-					    >&2 echo "$errout"
-					    return $ret
-					  }
-					  GPG_NAME=$( gpg2 --list-keys | egrep '^      ([ABCDEF0-9])*$' | head -1 )
-					  >&2 echo "Signing package $1."
-					  errout=$(rpm --addsign \
-					    --define "%_gpg_name $GPG_NAME" \
-					    --define '_signature gpg' \
-					    --define '_gpgbin /usr/bin/gpg2' \
-					    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
-					    "$1" 2>&1) || {
-					    ret=$?
-					    >&2 echo "$errout"
-					    return $ret
-					  }
-					  rpm -K "$1" || true
-					  rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
+					stage('Sign') {
+						steps {
+							sh '''#!/bin/bash -e
+							olddir="$PWD"
+							cd "$JENKINS_HOME"
+							PRIVKEY=
+							if test -d rpm-sign ; then
+							for f in rpm-sign/RPM-GPG-KEY-*.private.asc ; do
+							    if test -f "$f" ; then
+							    PRIVKEY="$PWD"/"$f"
+							    break
+							    fi
+							done
+							fi
+							if [ "$PRIVKEY" == "" ] ; then
+							>&2 echo error: could not find PRIVKEY in rpm-sign/, aborting
+							exit 40
+							fi
+							cd "$olddir"
+							sign() {
+							if [ -z "$tmpdir" ] ; then
+							    tmpdir=$(mktemp -d)
+							    trap 'echo rm -rf "$tmpdir"' EXIT
+							fi
+							export GNUPGHOME="$tmpdir"
+							errout=$(gpg2 --import < "$PRIVKEY" 2>&1) || {
+							    ret=$?
+							    >&2 echo "$errout"
+							    return $ret
+							}
+							GPG_NAME=$( gpg2 --list-keys | egrep '^      ([ABCDEF0-9])*$' | head -1 )
+							>&2 echo "Signing package $1."
+							errout=$(rpm --addsign \
+							    --define "%_gpg_name $GPG_NAME" \
+							    --define '_signature gpg' \
+							    --define '_gpgbin /usr/bin/gpg2' \
+							    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
+							    "$1" 2>&1) || {
+							    ret=$?
+							    >&2 echo "$errout"
+							    return $ret
+							}
+							rpm -K "$1" || true
+							rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
+							}
+							for rpm in out/*/*.rpm ; do
+							sign "$rpm"
+							done
+							'''
+						}
 					}
-					for rpm in out/*/*.rpm ; do
-					  sign "$rpm"
-					done
-					'''
-				}
-			}
-			stage('Archive') {
-				steps {
-					archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
-				}
-			}
-			stage('Integration') {
-				when {
-					expression {
-						return integration_step != null
+					stage('Archive') {
+						steps {
+							archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
+						}
 					}
-				}
-				steps {
-					script {
-						integration_step()
+					stage('Integration') {
+						when {
+							expression {
+								return integration_step != null
+							}
+						}
+						steps {
+							script {
+								integration_step()
+							}
+						}
 					}
-				}
-			}
-			stage('Publish') {
-				when {
-					expression {
-						return env.BRANCH_NAME == "master" || env.BRANCH_NAME.startsWith("unstable-") || env.PUBLISH_TO_REPO != ""
-					}
-				}
-				steps {
-					lock('autouploadrpms') {
-						script {
-							autouploadrpms()
+					stage('Publish') {
+						when {
+							expression {
+								return env.BRANCH_NAME == "master" || env.BRANCH_NAME.startsWith("unstable-") || env.PUBLISH_TO_REPO != ""
+							}
+						}
+						steps {
+							lock('autouploadrpms') {
+								script {
+									autouploadrpms()
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-		post {
-			always {
-				script {
-					announceEnd(currentBuild.currentResult)
-				}
-			}
-		}
+		//post {
+		//	always {
+		//		script {
+		//			announceEnd(currentBuild.currentResult)
+		//		}
+		//	}
+		//}
 	}
 }
