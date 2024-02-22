@@ -266,7 +266,8 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 											// def basename = funcs.downloadPypiPackageToSrpmSource()
 											// funcs.buildDownloadedPypiPackage(basename)
 										} else {
-											sh 'make srpm'
+											makeSrpm = buildStrategyMakeSRPM()
+											makeSrpm()
 										}
 									}
 								}
