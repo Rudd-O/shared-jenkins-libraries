@@ -1,14 +1,14 @@
 // Create source RPM from a source tree.  Finds first specfile in src/ and uses that.
 def call(String srcdir, String outdir) {
 	// srcdir is the directory tree that contains the source files to be tarred up.
-	// outdir is where the source RPM is deposited.  It is customarily src/ cos that's where automockrpms finds it.
+	// outdir is where the source RPM is deposited and where the specfile is.  It is customarily src/ cos that's where automockrpms finds it.
         println "Retrieving specfiles..."
         filename = sh(
                 returnStdout: true,
-                script: "find src/ -name '*.spec' | head -1"
+                script: "find ${outdir} -name '*.spec' | head -1"
         ).trim()
         if (filename == "") {
-                error('Could not find any specfile in src/ -- failing build.')
+                error("Could not find any specfile in ${outdir} -- failing build.")
         }
         println "Filename of specfile is ${filename}."
 
@@ -22,10 +22,10 @@ def call(String srcdir, String outdir) {
         // The following code copies up to ten source files as specified by the
         // specfile, if they exist in the src/ directory where the specfile is.
         for (i in funcs.getrpmsources(filename)) {
-                sh "if test -f src/${i} ; then cp src/${i} ${srcdir}/.. ; fi"
+                sh "if test -f ${outdir}/${i} ; then cp ${outdir}/${i} ${srcdir}/.. ; fi"
         }
         for (i in funcs.getrpmpatches(filename)) {
-                sh "if test -f src/${i} ; then cp src/${i} ${srcdir}/.. ; fi"
+                sh "if test -f ${outdir}/${i} ; then cp ${outdir}/${i} ${srcdir}/.. ; fi"
         }
         // This makes the source RPM.
         sh "rpmbuild --define \"_srcrpmdir ${outdir}\" --define \"_sourcedir ${srcdir}/..\" -bs ${filename}"
