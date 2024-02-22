@@ -73,6 +73,8 @@ def call(build_deps = null, test_step = null) {
 					stage('Deps') {
 						steps {
 							script {
+								env.GOPATH = "${env.WORKSPACE}/../../caches/go" 
+        						env.PIP_CACHE_DIR="${env.WORKSPACE}/../../caches/pip"
 								funcs.dnfInstall(['podman', 'buildah', 'make', 'rsync'])
 								if (build_deps != null) {
 									echo "Installing additional dependencies ${build_deps}."

@@ -21,6 +21,19 @@ def toInt(aNumber) {
     return aNumber.toInteger().intValue()
 }
 
+def findSpecfile() {
+    specfile = sh(
+        returnStdout: true,
+        script: "find -name '*.spec' | head -1",
+        label: "Find specfile"
+    ).trim()
+    if (specfile == "") {
+        error("Could not find any specfile -- failing build.")
+    }
+    println "Found specfile at ${specfile}."
+    return specfile
+}
+
 def wrapTag(aString, tag, style='') {
 	if (style != '') {
 		return "<" + tag + " style='" + groovy.xml.XmlUtil.escapeXml(style) + "'>" + aString + "</" + tag + ">"
@@ -54,17 +67,21 @@ def durable() {
 }
 
 String getrpmfield(String filename, String field) {
-	String str = sh(
+	return sh(
 		returnStdout: true,
 		script: """#!/bin/bash
 			rpmspec -P ${filename} | grep ^${field}: | awk ' { print \$2 } ' | head -1
-		"""
+		""",
+        label: "Getting RPM field $field"
 	).trim()
-	return str
 }
 
 def getrpmfieldlist(String filename, String fieldPrefix) {
 	ret = []
+    s = getrpmfield(filename, "${fieldPrefix}")
+    if (s != "") {
+        ret.add(s)
+    }
 	for (i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
 		s = getrpmfield(filename, "${fieldPrefix}${i}")
 		if (s == "") {
@@ -82,6 +99,26 @@ def getrpmsources(String filename) {
 
 def getrpmpatches(String filename) {
 	return getrpmfieldlist(filename, "Patch")
+}
+
+def makeTarballForSpecfile(String sourcetree) {
+    // sourcetree is the directory tree that contains the sources
+    // tarball will be deposited in the current directory
+    // tarball will contain a single folder named after the
+    // base name of the source tree specified here
+    specfile = findSpecfile()
+    tarball_name = basename(getrpmsources(specfile)[0])
+
+    // This makes the tarball.
+    sh """
+        p=\$PWD
+        cd ${sourcetree}
+        cd ..
+        bn=\$(basename ${sourcetree})
+        tar -cvz --exclude=.git -f ${tarball_name} \$bn
+        mv -f ${tarball_name} \$p
+    """
+    return tarball_name
 }
 
 def dnfInstall(deps) {
@@ -239,52 +276,6 @@ def downloadPypiPackageToSrpmSource() {
         }
 }
 
-def buildDownloadedPypiPackage(basename, opts="") {
-        // Build pypipackage-downloaded tarball, assuming pypipackage-to-srpm.yaml
-        // manifest presence, as well as patches present in the same directory.
-        sh """
-        y=pypipackage-to-srpm.yaml
-        disable_debug=
-        if [ "\$(shyaml get-value disable_debug False < \$y)" == "True" ] ; then
-                disable_debug=--disable-debug
-        fi
-        if [ "\$(shyaml get-value arch_dependent False < \$y)" == "True" ] ; then
-                arch_dependent=--arch-dependent
-        fi
-        if [ "\$(shyaml get-value module_to_save < \$y)" != "" ] ; then
-                module_to_save=--module-to-save=\$(shyaml get-value module_to_save < \$y)
-        fi
-        if [ "\$(shyaml get-values extra_globs < \$y)" != "" ] ; then
-            for v in \$(shyaml get-values extra_globs < \$y) ; do
-                extra_globs="--extra-globs=\$v \$extra_globs"
-            done
-        fi
-        if [ "\$(shyaml get-values buildrequires < \$y)" != "" ] ; then
-            for v in \$(shyaml get-values buildrequires < \$y) ; do
-                extra_buildrequires="--extra-buildrequires=\$v \$extra_buildrequires"
-            done
-        fi
-        if [ "\$(shyaml get-values requires < \$y)" != "" ] ; then
-            for v in \$(shyaml get-values requires < \$y) ; do
-                extra_requires="--extra-requires=\$v \$extra_requires"
-            done
-        fi
-        epoch=\$(shyaml get-value epoch '' < \$y || true)
-        if [ "\$epoch" != "" ] ; then
-                epoch="--epoch=\$epoch"
-        fi
-        diffs=1
-        for f in *.diff ; do
-                test -f "\$f" || diffs=0
-        done
-        if [ "\$diffs" == "1" ] ; then
-                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$disable_debug ${opts} "${basename}" *.diff
-        else
-                python3 `which pypipackage-to-srpm` --no-binary-rpms \$module_to_save \$extra_globs \$extra_requires \$extra_buildrequires \$arch_dependent \$epoch \$disable_debug ${opts} "${basename}"
-        fi
-        """
-}
-
 // Returns a list of files based on the spec glob passed to this function.
 def glob(spec) {
 	def filelist = []
@@ -332,7 +323,8 @@ def downloadUrl(url, filename, sha256sum, outdir) {
         if (outdir == null || outdir == "") {
             outdir = "."
         }
-        sh """
+        sh(
+            script: """
                 set +e
                 s=\$(sha256sum ${outdir}/${filename} | cut -f 1 -d ' ' || true)
                 if [ "\$s" != "${sha256sum}" ] ; then
@@ -344,7 +336,9 @@ def downloadUrl(url, filename, sha256sum, outdir) {
                             exit 8
                         fi
                 fi
-        """
+            """,
+            label: "Download ${filename} and verify it matches ${sha256sum}"
+        )
         return filename
 }
 
@@ -355,19 +349,6 @@ def downloadURLAndGPGSignature(dataURL, signatureURL) {
     rm -f -- ${urlBase} ${checksumBase}
     wget -c --progress=dot:giga --timeout=15 -- ${dataURL}
     wget -c --progress=dot:giga --timeout=15 -- ${signatureURL}
-    """
-}
-
-def downloadURLWithGPGVerification(dataURL, signatureURL, keyServer, keyID) {
-    downloadURLAndGPGSignature(dataURL, signatureURL)
-    def signatureBase = basename(signatureURL)
-    sh """
-    GNUPGHOME=`mktemp -d /tmp/.gpg-tmp-XXXXXXX`
-    export GNUPGHOME
-    eval \$(gpg-agent --homedir "\$GNUPGHOME" --daemon)
-    trap 'rm -rf "\$GNUPGHOME"' EXIT
-    gpg2 --verbose --homedir "\$GNUPGHOME" --keyserver ${keyServer} --recv ${keyID}
-    gpg2 --verbose --homedir "\$GNUPGHOME" --verify ${signatureBase}
     """
 }
 
@@ -395,6 +376,13 @@ def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, key
     gpg2 --verbose --homedir "\$GNUPGHOME" --keyserver ${keyServer} --recv ${keyID}
     gpg2 --verbose --homedir "\$GNUPGHOME" --verify ${checksumBase}
     """
+}
+
+def gomodvendor() {
+    sh(
+        script: 'go mod vendor',
+        label: "Vendor Go sources"
+    )
 }
 
 def repos() {

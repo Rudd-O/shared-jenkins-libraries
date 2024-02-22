@@ -55,14 +55,15 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									],
 									userRemoteConfigs: scm.userRemoteConfigs
 								])
+								script {
+									if (checkout_step != null) {
+										println "Executing custom checkout step."
+										checkout_step()
+									}
+								}
 							}
 							script {
 								env.PUBLISH_TO_REPO = funcs.loadParameter('PUBLISH_TO_REPO', '')
-								if (checkout_step != null) {
-									println "Executing custom checkout step."
-									println checkout_step
-									checkout_step()
-								}
 								if (params.FEDORA_RELEASES != 'default') {
 									env.FEDORA_RELEASES = params.FEDORA_RELEASES
 								} else {
@@ -120,6 +121,8 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					stage('Deps') {
 						steps {
 							script {
+								env.GOPATH = "${env.WORKSPACE}/../../caches/go" 
+        						env.PIP_CACHE_DIR="${env.WORKSPACE}/../../caches/pip"
 								funcs.dnfInstall([
 									'rpm-build',
 									'which',
@@ -252,20 +255,11 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 										label: "Find specfiles"
 									).trim().contains("spec")) {
 										funcs.downloadPypiPackageToSrpmSource()
-										sh(
-											script: '''
-											rpmbuild --define "_srcrpmdir ./" --define "_sourcedir ./" -bs *.spec
-											rm -rf build dist *.egg-info
-											''',
-											label: "Build SRPM from PyPI source and local specfile",
-										)
+										SRPMStrategyMakeSRPM()()
 									} else if (fileExists('pypipackage-to-srpm.yaml')) {
 										sh 'echo "Standalone pypipackage-to-srpm builds are no longer supported.  Use specfile along YAML file instead." >&2 ; false'
-										// def basename = funcs.downloadPypiPackageToSrpmSource()
-										// funcs.buildDownloadedPypiPackage(basename)
 									} else {
-										makeSrpm = buildStrategyMakeSRPM()
-										makeSrpm()
+										SRPMStrategyMakeSRPM()()
 									}
 								}
 							}
