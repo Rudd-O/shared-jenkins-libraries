@@ -210,65 +210,62 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					stage('SRPM') {
 						steps {
 							script {
-								if (srpm_step != null) {
-									println "Executing custom SRPM step"
-									println srpm_step
-									srpm_step()
-								} else {
-									dir('src') {
-										if (fileExists('setup.cfg') && !fileExists('setup.py')) {
-											sh(
-												script: '''
-												set -e
-												rm -rf build dist
-												python=python3
-												$python -m build --sdist
+								dir('src') {
+									if (srpm_step != null) {
+										println "Executing custom SRPM step in directory ./src"
+										srpm_step()
+									} else if (fileExists('setup.cfg') && !fileExists('setup.py')) {
+										sh(
+											script: '''
+											set -e
+											rm -rf build dist
+											python=python3
+											$python -m build --sdist
+											rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
+											rm -rf build dist *.egg-info
+											''',
+											label: "Build SRPM with python -m build"
+										)
+									} else if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
+										// The Makefile.builder signifies we have to make an SRPM
+										// using make, and ignore setup.py, because this is a
+										// Qubes OS builder-powered project.
+										sh(
+											script: '''
+											set -e
+											rm -rf build dist
+											python3 setup.py sdist
+											specs=$(ls -1 *.spec || true)
+											if [ "$specs" != "" ] ; then
 												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
-												rm -rf build dist *.egg-info
-												''',
-												label: "Build SRPM with python -m build"
-											)
-										} else if (fileExists('setup.py') && !fileExists('Makefile.builder')) {
-											// The Makefile.builder signifies we have to make an SRPM
-											// using make, and ignore setup.py, because this is a
-											// Qubes OS builder-powered project.
-											sh(
-												script: '''
-												set -e
-												rm -rf build dist
-												python3 setup.py sdist
-												specs=$(ls -1 *.spec || true)
-												if [ "$specs" != "" ] ; then
-													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs *.spec
-												else
-													python3 setup.py bdist_rpm --spec-only
-													rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs dist/*.spec
-												fi
-												rm -rf build dist *.egg-info
-												''',
-												label: "Build SRPM with python sdist/bdist_rpm"
-											)
-										} else if (fileExists('pypipackage-to-srpm.yaml') && sh(
-											script: "ls *.spec || true",
-											returnStdout: true,
-											label: "Find specfiles"
-										).trim().contains("spec")) {
-											funcs.downloadPypiPackageToSrpmSource()
-											sh(
-												script: '''
-												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir ./" -bs *.spec
-												rm -rf build dist *.egg-info
-												''',
-												label: "Build SRPM from PyPI source and local specfile",
-											)
-										} else if (fileExists('pypipackage-to-srpm.yaml')) {
-											sh 'echo "Standalone pypipackage-to-srpm builds are no longer supported.  Use specfile along YAML file instead." >&2 ; false'
-											// def basename = funcs.downloadPypiPackageToSrpmSource()
-											// funcs.buildDownloadedPypiPackage(basename)
-										} else {
-											makeSrpm = buildStrategyMakeSRPM()
-											makeSrpm()
-										}
+											else
+												python3 setup.py bdist_rpm --spec-only
+												rpmbuild --define "_srcrpmdir ./" --define "_sourcedir dist/" -bs dist/*.spec
+											fi
+											rm -rf build dist *.egg-info
+											''',
+											label: "Build SRPM with python sdist/bdist_rpm"
+										)
+									} else if (fileExists('pypipackage-to-srpm.yaml') && sh(
+										script: "ls *.spec || true",
+										returnStdout: true,
+										label: "Find specfiles"
+									).trim().contains("spec")) {
+										funcs.downloadPypiPackageToSrpmSource()
+										sh(
+											script: '''
+											rpmbuild --define "_srcrpmdir ./" --define "_sourcedir ./" -bs *.spec
+											rm -rf build dist *.egg-info
+											''',
+											label: "Build SRPM from PyPI source and local specfile",
+										)
+									} else if (fileExists('pypipackage-to-srpm.yaml')) {
+										sh 'echo "Standalone pypipackage-to-srpm builds are no longer supported.  Use specfile along YAML file instead." >&2 ; false'
+										// def basename = funcs.downloadPypiPackageToSrpmSource()
+										// funcs.buildDownloadedPypiPackage(basename)
+									} else {
+										makeSrpm = buildStrategyMakeSRPM()
+										makeSrpm()
 									}
 								}
 							}
