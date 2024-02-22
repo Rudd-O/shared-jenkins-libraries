@@ -235,13 +235,15 @@ function mocklock() {
 
 def call(String distro, String release, String arch, ArrayList args, ArrayList srpms) {
     def quotedargs = args.collect{ shellQuote(it) }.join(" ")
-    for (srpm in srpms) {
-        def mocklock = "mocklock " + release + " " + arch + " " + quotedargs + " " + shellQuote(srpm)
-        def cmd = """#!/bin/bash -e
-        """ + mockShellLib() + mocklock
-        sh(
-            script: cmd,
-            label: mocklock
-        )
+    lock("mock-$distro-$release-$arch") {
+        for (srpm in srpms) {
+            def mocklock = "mocklock " + release + " " + arch + " " + quotedargs + " " + shellQuote(srpm)
+            def cmd = """#!/bin/bash -e
+            """ + mockShellLib() + mocklock
+            sh(
+                script: cmd,
+                label: mocklock
+            )
+        }
     }
 }
