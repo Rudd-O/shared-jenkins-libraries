@@ -30,7 +30,6 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								deleteDir()
 							}
 							script {
-							//	announceBeginning()
 								funcs.durable()
 							}
 						}
@@ -111,6 +110,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								).trim()
 							}
 							updateBuildNumberDisplayName()
+							announceBeginning()
 							stash includes: '**', name: 'source', useDefaultExcludes: false
 						}
 					}
@@ -285,7 +285,6 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									parallelized["${distroandrelease[0]} ${it}"] = {
 										node('mock') {
 											env.MOCK_CACHEDIR = "${env.WORKSPACE}/../../caches/mock"
-											sh "env ; false"
 											deleteDir()
 											unstash 'srpm'
 											sh(
@@ -412,12 +411,12 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 				}
 			}
 		}
-		//post {
-		//	always {
-		//		script {
-		//			announceEnd(currentBuild.currentResult)
-		//		}
-		//	}
-		//}
+		post {
+			always {
+				node('master') {
+					announceEnd(currentBuild.currentResult)
+				}
+			}
+		}
 	}
 }

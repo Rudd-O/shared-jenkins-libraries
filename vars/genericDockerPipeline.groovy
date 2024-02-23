@@ -11,8 +11,8 @@ def call(build_deps = null, test_step = null) {
 		stages {
 			stage('Begin') {
 				steps {
+					announceBeginning()
 					script {
-						funcs.announceBeginning()
 						funcs.durable()
 					}
 				}
@@ -151,9 +151,7 @@ def call(build_deps = null, test_step = null) {
 		}
 		post {
 			always {
-				script {
-					funcs.announceEnd(currentBuild.currentResult)
-				}
+				announceEnd(currentBuild.currentResult)
 			}
 		}
 	}
