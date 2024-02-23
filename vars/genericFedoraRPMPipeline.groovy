@@ -6,6 +6,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			buildDiscarder(logRotator(numToKeepStr: '50', artifactNumToKeepStr: '1'))
 			copyArtifactPermission('/zfs-fedora-installer/*')
 			parallelsAlwaysFailFast()
+			preserveStashes(buildCount: 3)
 		}
 		parameters {
 			string defaultValue: 'default', description: "Which Fedora releases[:architectures] to build for, separated by spaces; 'default' means the job's default.", name: 'FEDORA_RELEASES', trim: true
@@ -117,12 +118,14 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			}
 			stage('Prep on slave') {
 				agent { label 'mock' }
+				environment {
+					GOPATH = "${env.WORKSPACE}/../../caches/go"
+					PIP_CACHE_DIR = "${env.WORKSPACE}/../../caches/pip"
+				}
 				stages {
 					stage('Deps') {
 						steps {
 							script {
-								env.GOPATH = "${env.WORKSPACE}/../../caches/go" 
-        						env.PIP_CACHE_DIR="${env.WORKSPACE}/../../caches/pip"
 								funcs.dnfInstall([
 									'rpm-build',
 									'which',
@@ -281,9 +284,15 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								distroandrelease[1].split(" ").each {
 									parallelized["${distroandrelease[0]} ${it}"] = {
 										node('mock') {
+											env.MOCK_CACHEDIR = "${env.WORKSPACE}/../../caches/mock"
+											sh "env ; false"
 											deleteDir()
 											unstash 'srpm'
-											sh "pwd ; ls -lR src ; date"
+											sh(
+												script: """#!/bin/bash
+												pwd ; ls -lR src ; date""",
+												label: "See what's about to be built"
+											)
 											automock(distroandrelease[0], it)
 											stash includes: 'out/*/*.rpm', name: "out-${distroandrelease[0]} ${it}"
 										}
