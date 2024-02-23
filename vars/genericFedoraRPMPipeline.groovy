@@ -304,7 +304,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					}
 				}
 			}
-			stage('Finish on master') {
+			stage('Sign / archive') {
 				agent { label 'master' }
 				stages{
 					stage('Unstash') {
@@ -367,7 +367,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								rpm -q --qf '%{SIGPGP:pgpsig} %{SIGGPG:pgpsig}\n' -p "$1"
 								}
 								for rpm in out/*/*.rpm ; do
-								sign "$rpm"
+									sign "$rpm"
 								done
 								'''.stripIndent().trim(),
 								label: "Sign RPMs."
@@ -377,35 +377,46 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					stage('Archive') {
 						steps {
 							archiveArtifacts artifacts: 'out/*/*.rpm', fingerprint: true
+							stash includes: 'out/*/*.rpm', name: "signed"
 						}
 					}
-					stage('Integration') {
-						when {
-							expression {
-								return integration_step != null
-							}
-						}
-						steps {
-							script {
-								integration_step()
-							}
-						}
+				}
+			}
+			stage('Integrate') {
+				agent { label 'master' }
+				when {
+					expression {
+						return integration_step != null
 					}
-					stage('Publish') {
-						when {
-							expression {
-								return env.BRANCH_NAME == "master" || env.BRANCH_NAME.startsWith("unstable-") || env.PUBLISH_TO_REPO != ""
-							}
-						}
-						steps {
-							lock('autouploadrpms') {
-								script {
-									sh(
-										script: "/var/lib/jenkins/userContent/upload-deliverables out/*",
-										label: "Upload deliverables"
-									)
-								}
-							}
+				}
+				steps {
+					dir("out") {
+						deleteDir()
+					}
+					script {
+						unstash "signed"
+						integration_step()
+					}
+				}
+			}
+			stage('Publish') {
+				agent { label 'master' }
+				when {
+					expression {
+						return env.BRANCH_NAME == "master" || env.BRANCH_NAME.startsWith("unstable-") || env.PUBLISH_TO_REPO != ""
+					}
+				}
+				steps {
+					dir("out") {
+						deleteDir()
+					}
+					unstash "signed"
+					lock('autouploadrpms') {
+						script {
+							sh(
+								script: "/var/lib/jenkins/userContent/upload-deliverables out/*",
+								label: "Upload deliverables"
+							)
 						}
 					}
 				}
