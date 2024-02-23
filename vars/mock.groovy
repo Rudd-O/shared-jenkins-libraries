@@ -28,7 +28,7 @@ config_opts['releasever'] = '$releasewithoutname'
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
 # generates problems in f37+
-config_opts['plugin_conf']['nosync'] = False
+config_opts['plugin_conf']['nosync'] = True
 config_opts['use_bootstrap'] = False
 config_opts['package_manager'] = 'dnf'
 
@@ -127,7 +127,7 @@ config_opts['isolation'] = 'simple'
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
 # generates problems in f37+
-config_opts['plugin_conf']['nosync'] = False
+config_opts['plugin_conf']['nosync'] = True
 config_opts['use_bootstrap'] = False
 config_opts['package_manager'] = 'dnf'
 
