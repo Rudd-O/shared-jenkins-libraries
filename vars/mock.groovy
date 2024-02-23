@@ -28,7 +28,9 @@ config_opts['use_bootstrap'] = False
 
 config_opts['description'] = 'Fedora {{ releasever }}'
 
-config_opts['chroot_setup_cmd'] = 'install @buildsys-build'
+config_opts['chroot_setup_cmd'] = 'install @buildsys-build /usr/bin/pigz /usr/bin/lbzip2'
+config_opts['macros']['%__gzip'] = '/usr/bin/pigz'
+config_opts['macros']['%__bzip2'] = '/usr/bin/lbzip2'
 
 config_opts['isolation'] = 'simple'
 config_opts['rpmbuild_networking'] = False
@@ -132,7 +134,9 @@ config_opts['use_bootstrap'] = False
 
 config_opts['description'] = 'Qubes OS {{ releasever }}'
 
-config_opts['chroot_setup_cmd'] = 'install @buildsys-build'
+config_opts['chroot_setup_cmd'] = 'install @buildsys-build /usr/bin/pigz /usr/bin/lbzip2'
+config_opts['macros']['%__gzip'] = '/usr/bin/pigz'
+config_opts['macros']['%__bzip2'] = '/usr/bin/lbzip2'
 
 config_opts['isolation'] = 'simple'
 config_opts['rpmbuild_networking'] = False
