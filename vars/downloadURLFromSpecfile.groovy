@@ -5,5 +5,5 @@ def call(Map config) {
                 specfile = funcs.findSpecfile()
         }
         url = funcs.getrpmsources(specfile)[0]
-        funcs.downloadUrl(url, null, config.sha256sum, ".")
+        funcs.downloadURLWithSHA256Checksum(url, config.sha256sum)
 }

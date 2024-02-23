@@ -265,7 +265,7 @@ def downloadPypiPackageToSrpmSource() {
                 script: 'shyaml get-value source_filename < pypipackage-to-srpm.yaml || true',
                 returnStdout: true
             ).trim()
-            def basename = downloadUrl(url, null, sum, ".")
+            def basename = downloadURLWithSHA256Checksum(url, sum)
             if (actualfilename != "" && actualfilename != basename) {
                 sh "mv -f ${basename} ${actualfilename}"
                 return actualfilename
@@ -312,32 +312,79 @@ def srpmFromSpecAndDirContainingSpecSources(srcdir, outdir) {
 	}
 }
 
-def downloadUrl(url, filename, sha256sum, outdir) {
-	// outdir is the directory where the file will appear.
-	// basename can be null, optionally, in which case it will be computed automatically and returned.
-        if (filename == null || filename == "") {
-            filename = basename(url)
-        }
-        if (outdir == null || outdir == "") {
-            outdir = "."
-        }
+def computeSHA256sum(String filename) {
+    fn = shellQuote(filename)
+    return sh(
+        script: """
+            #!/bin/bash
+            sha256sum ${fn} | cut -f 1 -d ' '
+        """,
+        label: "SHA256 sum of ${filename}",
+        returnStdout: true
+    ).trim()
+}
+
+def computeSHA512sum(String filename) {
+    fn = shellQuote(filename)
+    return sh(
+        script: """
+            #!/bin/bash
+            sha512sum ${fn} | cut -f 1 -d ' '
+        """,
+        label: "SHA512 sum of ${filename}",
+        returnStdout: true
+    ).trim()
+}
+
+def downloadURLUnchecked(url, outpath, simulate=false) {
+    // outpath is the path to the saved file, but if the last
+    // character is a slash, the path is assumed to be a directory
+    // and the file name will be deduced from the URL.  If outpath
+    // is empty or null, the current directory will be the download
+    // target.
+    // if simulate is true, the actual download is skipped.
+    if (outpath == null || outpath == "") {
+        outdir = "."
+        filename = basename(url)
+    } else if (outpath.endswith("/")) {
+        outdir = outpath
+        filename = basename(url)
+    } else {
+        outdir = dirname(outpath)
+        filename = basename(outpath)
+    }
+    filename = "${outdir}/${filename}"
+    if (!simulate || simulate == null) {
         sh(
-            script: """
-                set +e
-                s=\$(sha256sum ${outdir}/${filename} | cut -f 1 -d ' ' || true)
-                if [ "\$s" != "${sha256sum}" ] ; then
-                        rm -f -- ${outdir}/${filename}
-                        wget --progress=dot:giga --timeout=15 -O ${outdir}/${filename} -- ${url} || exit \$?
-                        s=\$(sha256sum ${outdir}/${filename} | cut -f 1 -d ' ' || true)
-                        if [ "\$s" != "${sha256sum}" ] ; then
-                            >&2 echo error: SHA256 sum "\$s" of file "${outdir}/${filename}" does not match expected sum "${sha256sum}"
-                            exit 8
-                        fi
-                fi
+            script: """#!/bin/bash -e
+                rm -f -- ${shellQuote(filename)}
+                wget --progress=dot:giga --timeout=15 -O ${shellQuote(filename)} -- ${shellQuote(url)}
             """,
-            label: "Download ${filename} and verify it matches ${sha256sum}"
+            label: "Download to ${filename}"
         )
-        return filename
+    }
+    return filename
+}
+
+def downloadURLChecked(url, outputpath, sum, checker) {
+    o = downloadURLUnchecked(url, outputpath, true)
+    if (checker(o) == sum) {
+        return o
+    }
+    o = downloadURLUnchecked(url, outputpath)
+    actualsum = checker(o)
+    if (actualsum == sum) {
+        return o
+    }
+    error("Checksum expected ${sum} of ${o} does not match calculated sum ${actualsum}")
+}
+
+def downloadURLWithSHA256Checksum(url, sha256sum, outfilename=null) {
+    return downloadURLChecked(url, outfilename, sha256sum, { x -> computeSHA512sum(x) })
+}
+
+def downloadURLWithSHA512Checksum(url, sha512sum, outfilename=null) {
+    return downloadURLChecked(url, outfilename, sha512sum, { x -> computeSHA512sum(x) })
 }
 
 def downloadURLAndGPGSignature(dataURL, signatureURL) {
