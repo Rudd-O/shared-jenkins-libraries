@@ -14,23 +14,29 @@ config_opts['print_main_output'] = True
 
 config_opts['basedir'] = '$basedir'
 config_opts['root'] = '$root'
+config_opts['releasever'] = '$releasewithoutname'
+
+config_opts['dist'] = '$release'  # only useful for --resultdir variable subst
+config_opts['extra_chroot_dirs'] = ['/run/lock']
+
 config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
-# rpmdevtools was installed to support rpmdev-bumpspec below
-# python-setuptools was installed to allow for python builds
-config_opts['chroot_setup_cmd'] = 'install @buildsys-build autoconf automake gettext-devel libtool git rpmdevtools python-setuptools python3-setuptools /usr/bin/python3 shadow-utils /bin/sh rpm'
-config_opts['extra_chroot_dirs'] = ['/run/lock']
+
+config_opts['package_manager'] = '{% if releasever|int >= 40 %}dnf5{% else %}dnf{% endif %}'
+
+config_opts['use_bootstrap'] = False
+
+config_opts['description'] = 'Fedora {{ releasever }}'
+
+config_opts['chroot_setup_cmd'] = 'install @buildsys-build'
+
 config_opts['isolation'] = 'simple'
-config_opts['rpmbuild_networking'] = True
+config_opts['rpmbuild_networking'] = False
 config_opts['use_host_resolv'] = False
-config_opts['dist'] = '$release'  # only useful for --resultdir variable subst
-config_opts['releasever'] = '$releasewithoutname'
+
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
-# generates problems in f37+
 config_opts['plugin_conf']['nosync'] = True
-config_opts['use_bootstrap'] = False
-config_opts['package_manager'] = 'dnf'
 
 config_opts['cache_topdir'] = '$cache_topdir'
 config_opts['plugin_conf']['root_cache_enable'] = True
@@ -46,20 +52,21 @@ config_opts['plugin_conf']['root_cache_opts']['exclude_dirs'] = ['./proc', './sy
 config_opts['dnf.conf'] = """
 [main]
 keepcache=1
+system_cachedir=/var/cache/dnf
 debuglevel=0
-cachedir=/var/cache/yum
 reposdir=/dev/null
 logfile=/var/log/yum.log
 retries=20
 obsoletes=1
 gpgcheck=1
 assumeyes=1
+best=1
 syslog_ident=mock
 syslog_device=
 install_weak_deps=0
-metadata_expire=0
-mdpolicy=group:primary
-best=1
+metadata_expire=1800
+protected_packages=
+user_agent={{ user_agent }}
 
 # repos
 [fedora]
@@ -107,29 +114,34 @@ function config_mocklock_qubes() {
     cat > "$outputfile" <<EOF
 config_opts['print_main_output'] = True
 
+config_opts['basedir'] = '$basedir'
+config_opts['root'] = '$root'
 config_opts['releasever'] = '$releasewithoutname'
 config_opts['fedorareleasever'] = '$fedorareleasever'
 config_opts['qubeskeyver'] = '$qubeskeyver'
 
-config_opts['target_arch'] = 'x86_64'
-config_opts['legal_host_arches'] = ('x86_64',)
+config_opts['dist'] = 'q{{ releasever }}'
+config_opts['extra_chroot_dirs'] = ['/run/lock']
 
-config_opts['basedir'] = '$basedir'
-config_opts['root'] = '$root'
+config_opts['target_arch'] = '$arch'
+config_opts['legal_host_arches'] = ('$arch',)
+
+config_opts['package_manager'] = '{% if releasever|int >= 40 %}dnf5{% else %}dnf{% endif %}'
+
+config_opts['use_bootstrap'] = False
 
 config_opts['description'] = 'Qubes OS {{ releasever }}'
 
-config_opts['chroot_setup_cmd'] = 'install systemd bash coreutils tar dnf qubes-release rpm-build'
+config_opts['chroot_setup_cmd'] = 'install @buildsys-build'
 
-config_opts['dist'] = 'q{{ releasever }}'
-config_opts['extra_chroot_dirs'] = [ '/run/lock', ]
 config_opts['isolation'] = 'simple'
+config_opts['rpmbuild_networking'] = False
+config_opts['use_host_resolv'] = False
+
 config_opts['plugin_conf']['ccache_enable'] = False
 config_opts['plugin_conf']['generate_completion_cache_enable'] = False
-# generates problems in f37+
 config_opts['plugin_conf']['nosync'] = True
-config_opts['use_bootstrap'] = False
-config_opts['package_manager'] = 'dnf'
+
 
 config_opts['cache_topdir'] = '$cache_topdir'
 config_opts['plugin_conf']['root_cache_enable'] = True
@@ -145,6 +157,7 @@ config_opts['plugin_conf']['root_cache_opts']['exclude_dirs'] = ['./proc', './sy
 config_opts['dnf.conf'] = """
 [main]
 keepcache=1
+system_cachedir=/var/cache/dnf
 debuglevel=0
 reposdir=/dev/null
 logfile=/var/log/yum.log
@@ -153,12 +166,10 @@ obsoletes=1
 gpgcheck=0
 assumeyes=1
 best=1
-module_platform_id=platform:f{{ fedorareleasever }}
 syslog_ident=mock
 syslog_device=
 install_weak_deps=0
-metadata_expire=0
-best=1
+metadata_expire=1800
 protected_packages=
 user_agent={{ user_agent }}
 
@@ -178,6 +189,14 @@ gpgkey=file:///usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-{{ fedo
 gpgcheck=1
 skip_if_unavailable=False
 
+[dragonfear]
+name=dragonfear
+baseurl=http://dnf-updates.dragonfear/fc\\$releasever/
+gpgcheck=0
+metadata_expire=30
+"""
+EOF
+
 [qubes-dom0-current]
 name = Qubes Dom0 Repository (updates)
 metalink = https://yum.qubes-os.org/r{{ releasever }}/current/dom0/fc{{ fedorareleasever }}/repodata/repomd.xml.metalink
@@ -186,7 +205,6 @@ enabled = 1
 metadata_expire = 6h
 gpgcheck = 1
 gpgkey = file:///usr/share/distribution-gpg-keys/qubes/qubes-release-{{ qubeskeyver }}-signing-key.asc
-
 """
 EOF
 }
