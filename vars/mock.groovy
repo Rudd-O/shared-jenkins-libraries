@@ -198,8 +198,6 @@ name=dragonfear
 baseurl=http://dnf-updates.dragonfear/fc\\$releasever/
 gpgcheck=0
 metadata_expire=30
-"""
-EOF
 
 [qubes-dom0-current]
 name = Qubes Dom0 Repository (updates)
