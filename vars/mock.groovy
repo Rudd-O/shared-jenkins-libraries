@@ -131,6 +131,17 @@ config_opts['plugin_conf']['nosync'] = True
 config_opts['use_bootstrap'] = False
 config_opts['package_manager'] = 'dnf'
 
+config_opts['cache_topdir'] = '$cache_topdir'
+config_opts['plugin_conf']['root_cache_enable'] = True
+config_opts['plugin_conf']['root_cache_opts'] = {}
+config_opts['plugin_conf']['root_cache_opts']['age_check'] = True
+config_opts['plugin_conf']['root_cache_opts']['max_age_days'] = 30
+config_opts['plugin_conf']['root_cache_opts']['dir'] = '%(cache_topdir)s/%(root)s/root_cache/'
+config_opts['plugin_conf']['root_cache_opts']['compress_program'] = 'gzip'
+config_opts['plugin_conf']['root_cache_opts']['decompress_program'] = 'gunzip'
+config_opts['plugin_conf']['root_cache_opts']['extension'] = '.gz'
+config_opts['plugin_conf']['root_cache_opts']['exclude_dirs'] = ['./proc', './sys', './dev', './tmp/ccache', './var/cache/yum', './builddir', './build' ]
+
 config_opts['dnf.conf'] = """
 [main]
 keepcache=1
@@ -186,18 +197,23 @@ function mocklock() {
     local arch="$1"
     shift
 
-    local basedir="$MOCK_CACHEDIR"
-    if test -z "$basedir" ; then
+    local jaildir="$MOCK_JAILDIR"
+    if test -z "$jaildir" ; then
+        echo 'No MOCK_BASEDIR variable configured on this slave.  Aborting.' >&2
+        exit 56
+    fi
+
+    local cachedir="$MOCK_CACHEDIR"
+    if test -z "$cachedir" ; then
         echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
         exit 56
     fi
 
-    mkdir -p "$basedir"
+    mkdir -p "$jaildir" "$cachedir"
     local jail="fedora-$release-$arch-generic"
-    local lockfile="$basedir/$jail.lock"
-    local tmpcfg=$(mktemp "$basedir"/XXXXXX)
-    local cfgfile="$basedir/$jail.cfg"
-    local cache_topdir="$HOME/.cache/mock"
+    local lockfile="$jaildir/$jail.lock"
+    local tmpcfg=$(mktemp "$jaildir/tmp-$jail-XXXXXX.cfg")
+    local cfgfile="$jaildir/$jail.cfg"
 
     (
         flock 9
@@ -213,7 +229,7 @@ function mocklock() {
         fi
 
         local cfgret=0
-        $configurator "$tmpcfg" "$release" "$arch" "$basedir" "$jail" "$cache_topdir" || cfgret=$?
+        $configurator "$tmpcfg" "$release" "$arch" "$jaildir" "$jail" "$cachedir" || cfgret=$?
         if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; exit "$cfgret" ; fi
 
         if cmp "$cfgfile" "$tmpcfg" >&2 ; then

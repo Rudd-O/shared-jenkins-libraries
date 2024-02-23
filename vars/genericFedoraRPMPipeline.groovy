@@ -111,6 +111,10 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							}
 							updateBuildNumberDisplayName()
 							announceBeginning()
+						}
+					}
+					stage("Bundle source") {
+						steps {
 							stash includes: '**', name: 'source', useDefaultExcludes: false
 						}
 					}
@@ -158,7 +162,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							}
 						}
 					}
-					stage('Unstash') {
+					stage('Retrieve source') {
 						steps {
 							deleteDir()
 							unstash 'source'
@@ -284,6 +288,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								distroandrelease[1].split(" ").each {
 									parallelized["${distroandrelease[0]} ${it}"] = {
 										node('mock') {
+											env.MOCK_JAILDIR = "${env.WORKSPACE}/../../jails/mock"
 											env.MOCK_CACHEDIR = "${env.WORKSPACE}/../../caches/mock"
 											deleteDir()
 											unstash 'srpm'
@@ -307,7 +312,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			stage('Sign / archive') {
 				agent { label 'master' }
 				stages{
-					stage('Unstash') {
+					stage('Consolidate built packages') {
 						steps {
 							dir("out") {
 								deleteDir()
