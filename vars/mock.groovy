@@ -214,6 +214,8 @@ EOF
 }
 
 function mocklock() {
+    set -x
+
     local release="$1"
     shift
     local arch="$1"
@@ -231,6 +233,8 @@ function mocklock() {
         exit 56
     fi
 
+    local configurator=
+    local configname=
     if [[ $release == q* ]] ; then
         configurator=config_mocklock_qubes
         configname=qubes
@@ -252,11 +256,8 @@ function mocklock() {
         set -x
         flock 9
 
-        local configurator=
-        local configname=
-
         local cfgret=0
-        $configurator "$tmpcfg" "$release" "$arch" "$jaildir" "$jail" "$cachedir" || cfgret=$?
+        "$configurator" "$tmpcfg" "$release" "$arch" "$jaildir" "$jail" "$cachedir" || cfgret=$?
         if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; exit "$cfgret" ; fi
 
         if cmp "$cfgfile" "$tmpcfg" >&2 ; then
