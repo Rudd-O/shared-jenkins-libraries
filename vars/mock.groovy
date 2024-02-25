@@ -214,8 +214,6 @@ EOF
 }
 
 function mocklock() {
-    set -x
-
     local release="$1"
     shift
     local arch="$1"
@@ -253,7 +251,6 @@ function mocklock() {
     local cfgfile="$jaildir/$jail.cfg"
 
     (
-        set -x
         flock 9
 
         local cfgret=0
