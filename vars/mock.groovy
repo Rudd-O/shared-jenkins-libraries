@@ -238,6 +238,7 @@ function mocklock() {
     local cfgfile="$jaildir/$jail.cfg"
 
     (
+        set -x
         flock 9
 
         local configurator=
