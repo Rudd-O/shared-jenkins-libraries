@@ -380,7 +380,7 @@ def downloadURLChecked(url, outputpath, sum, checker) {
 }
 
 def downloadURLWithSHA256Checksum(url, sha256sum, outfilename=null) {
-    return downloadURLChecked(url, outfilename, sha256sum, { x -> computeSHA512sum(x) })
+    return downloadURLChecked(url, outfilename, sha256sum, { x -> computeSHA256sum(x) })
 }
 
 def downloadURLWithSHA512Checksum(url, sha512sum, outfilename=null) {
