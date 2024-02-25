@@ -197,7 +197,7 @@ skip_if_unavailable=False
 
 [dragonfear]
 name=dragonfear
-baseurl=http://dnf-updates.dragonfear/fc\\$releasever/
+baseurl=http://dnf-updates.dragonfear/q\\$releasever/
 gpgcheck=0
 metadata_expire=30
 
@@ -231,8 +231,19 @@ function mocklock() {
         exit 56
     fi
 
+    if [[ $release == q* ]] ; then
+        configurator=config_mocklock_qubes
+        configname=qubes
+    elif [[ $release == fc* ]] ; then
+        configurator=config_mocklock_fedora
+        configname=fedora
+    else
+        echo "Don't know how to mock $release" >&2
+        exit 56
+    fi
+
     mkdir -p "$jaildir" "$cachedir"
-    local jail="fedora-$release-$arch-generic"
+    local jail="$configname-$release-$arch-generic"
     local lockfile="$jaildir/$jail.lock"
     local tmpcfg=$(mktemp "$jaildir/tmp-$jail-XXXXXX.cfg")
     local cfgfile="$jaildir/$jail.cfg"
@@ -242,14 +253,7 @@ function mocklock() {
         flock 9
 
         local configurator=
-        if [[ $release == q* ]] ; then
-            configurator=config_mocklock_qubes
-        elif [[ $release == fc* ]] ; then
-            configurator=config_mocklock_fedora
-        else
-            echo "Don't know how to mock $release" >&2
-            exit 56
-        fi
+        local configname=
 
         local cfgret=0
         $configurator "$tmpcfg" "$release" "$arch" "$jaildir" "$jail" "$cachedir" || cfgret=$?
