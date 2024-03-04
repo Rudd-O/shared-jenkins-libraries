@@ -24,7 +24,7 @@ def call() {
 						}
 					}
 					script {
-						funcs.announceBeginning()
+						announceBeginning()
 						funcs.durable()
 					}
 				}
@@ -44,7 +44,7 @@ def call() {
 		post {
 			always {
 				script {
-					funcs.announceEnd(currentBuild.currentResult)
+					announceEnd(currentBuild.currentResult)
 				}
 			}
 		}
