@@ -257,7 +257,7 @@ function mocklock() {
         "$configurator" "$tmpcfg" "$release" "$arch" "$jaildir" "$jail" "$cachedir" || cfgret=$?
         if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; exit "$cfgret" ; fi
 
-        if cmp "$cfgfile" "$tmpcfg" >&2 ; then
+        if diff -Naur "$cfgfile" "$tmpcfg" >&2 ; then
             rm -f "$tmpcfg"
         else
             mv -f "$tmpcfg" "$cfgfile"

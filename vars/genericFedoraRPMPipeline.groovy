@@ -262,7 +262,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 										label: "Find specfiles"
 									).trim().contains("spec")) {
 										funcs.downloadPypiPackageToSrpmSource()
-										SRPMStrategyMakeSRPM()()
+										SRPMStrategyRpmbuildBs()()
 									} else if (fileExists('pypipackage-to-srpm.yaml')) {
 										sh 'echo "Standalone pypipackage-to-srpm builds are no longer supported.  Use specfile along YAML file instead." >&2 ; false'
 									} else {
