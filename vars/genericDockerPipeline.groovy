@@ -119,7 +119,8 @@ def call(build_deps = null, test_step = null) {
 						steps {
 							script {
 								dir('src') {
-									sh 'BUILDAH_ISOLATION=chroot make docker IMAGE_BRANCH=$BRANCH_NAME'
+									// --cache-to registry/myrepo/cache --cache-from registry/myrepo/cache
+									sh 'BUILDAH_ISOLATION=chroot make docker IMAGE_BRANCH=$BRANCH_NAME BUILDAH_FLAGS="--layers"'
 									tags = sh(
 										script: "make -s docker-tags IMAGE_BRANCH=$BRANCH_NAME",
 										returnStdout: true
