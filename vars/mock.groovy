@@ -4,9 +4,9 @@ function config_mocklock_fedora() {
     local outputfile="$1"
     local release="$2"
     local arch="$3"
-    local basedir="$4"
+    local basedir="$(realpath -m "$4")"
     local root="$5"
-    local cache_topdir="$6"
+    local cache_topdir="$(realpath -m "$6")"
     local releasewithoutname=$(echo "$release" | sed 's/fc//')
 
     cat > "$outputfile" <<EOF
@@ -21,7 +21,6 @@ config_opts['extra_chroot_dirs'] = ['/run/lock']
 
 config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
-config_opts['use_container_host_hostname'] = True
 
 config_opts['package_manager'] = '{% if releasever|int >= 40 %}dnf5{% else %}dnf{% endif %}'
 
@@ -31,8 +30,9 @@ config_opts['description'] = 'Fedora {{ releasever }}'
 
 config_opts['chroot_setup_cmd'] = 'install @buildsys-build /usr/bin/pigz /usr/bin/lbzip2 libevent'
 config_opts['macros']['%__gzip'] = '/usr/bin/pigz -R'
-# possible nonreproducibility next line
+# possible nonreproducibility next lines
 config_opts['macros']['%__bzip2'] = '/usr/bin/lbzip2'
+config_opts['macros']['%_buildhost'] = '$root.$HOSTNAME.dragonfear'
 
 config_opts['isolation'] = 'simple'
 config_opts['rpmbuild_networking'] = False
@@ -99,9 +99,9 @@ function config_mocklock_qubes() {
     local outputfile="$1"
     local release="$2"
     local arch="$3"
-    local basedir="$4"
+    local basedir="$(realpath -m "$4")"
     local root="$5"
-    local cache_topdir="$6"
+    local cache_topdir="$(realpath -m "$6")"
     local releasewithoutname=$(echo "$release" | sed 's/q//')
 
     if [ "$release" == "q4.1" ] ; then
@@ -129,7 +129,6 @@ config_opts['extra_chroot_dirs'] = ['/run/lock']
 
 config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
-config_opts['use_container_host_hostname'] = True
 
 config_opts['package_manager'] = '{% if releasever|int >= 40 %}dnf5{% else %}dnf{% endif %}'
 
@@ -139,8 +138,9 @@ config_opts['description'] = 'Qubes OS {{ releasever }}'
 
 config_opts['chroot_setup_cmd'] = 'install @buildsys-build /usr/bin/pigz /usr/bin/lbzip2 libevent'
 config_opts['macros']['%__gzip'] = '/usr/bin/pigz -R'
-# possible nonreproducibility next line
+# possible nonreproducibility next lines
 config_opts['macros']['%__bzip2'] = '/usr/bin/lbzip2'
+config_opts['macros']['%_buildhost'] = '$root.$HOSTNAME.dragonfear'
 
 config_opts['isolation'] = 'simple'
 config_opts['rpmbuild_networking'] = False
