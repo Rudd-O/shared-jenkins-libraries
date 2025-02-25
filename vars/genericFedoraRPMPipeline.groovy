@@ -224,7 +224,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									if (srpm_step != null) {
 										println "Executing custom SRPM step in directory ./src"
 										srpm_step()
-									} else if (fileExists('setup.cfg') && !fileExists('setup.py')) {
+									} else if ((fileExists('setup.cfg') || fileExists('pyproject.toml')) && !fileExists('setup.py')) {
 										sh(
 											script: '''
 											set -e
