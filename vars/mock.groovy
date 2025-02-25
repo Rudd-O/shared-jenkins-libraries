@@ -21,6 +21,7 @@ config_opts['extra_chroot_dirs'] = ['/run/lock']
 
 config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
+config_opts['use_container_host_hostname'] = True
 
 config_opts['package_manager'] = '{% if releasever|int >= 40 %}dnf5{% else %}dnf{% endif %}'
 
@@ -128,6 +129,7 @@ config_opts['extra_chroot_dirs'] = ['/run/lock']
 
 config_opts['target_arch'] = '$arch'
 config_opts['legal_host_arches'] = ('$arch',)
+config_opts['use_container_host_hostname'] = True
 
 config_opts['package_manager'] = '{% if releasever|int >= 40 %}dnf5{% else %}dnf{% endif %}'
 
