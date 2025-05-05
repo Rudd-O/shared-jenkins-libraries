@@ -220,6 +220,8 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					stage('SRPM') {
 						steps {
 							script {
+								env.MOCK_JAILDIR = "${env.WORKSPACE}/../../jails/mock"
+								env.MOCK_CACHEDIR = "${env.WORKSPACE}/../../caches/mock"
 								dir('src') {
 									if (srpm_step != null) {
 										println "Executing custom SRPM step in directory ./src"

@@ -223,13 +223,13 @@ function mocklock() {
 
     local jaildir="$MOCK_JAILDIR"
     if test -z "$jaildir" ; then
-        echo 'No MOCK_BASEDIR variable configured on this slave.  Aborting.' >&2
+        echo "No MOCK_JAILDIR variable configured on this slave ($HOSTNAME).  Aborting." >&2
         exit 56
     fi
 
     local cachedir="$MOCK_CACHEDIR"
     if test -z "$cachedir" ; then
-        echo 'No MOCK_CACHEDIR variable configured on this slave.  Aborting.' >&2
+        echo "No MOCK_CACHEDIR variable configured on this slave ($HOSTNAME).  Aborting." >&2
         exit 56
     fi
 
@@ -266,7 +266,7 @@ function mocklock() {
             echo Reconfigured "$cfgfile" >&2
         fi
 
-        echo "Running process in mock jail" >&2
+        echo "Running process in mock jail $cfgfile" >&2
         /usr/bin/mock --no-bootstrap-image -r "$cfgfile" "$@" < /dev/null
         exit $?
 
@@ -276,19 +276,18 @@ function mocklock() {
 '''
 }
 
-def call(String distro, String release, String arch, ArrayList args, ArrayList srpms) {
+def call(String distro, String release, String arch, ArrayList args) {
     def quotedargs = args.collect{ shellQuote(it) }.join(" ")
+    def release_code = funcs.releaseCode(distro, release)
     lock("mock-$distro-$release-$arch") {
         timestamps {
-            for (srpm in srpms) {
-                def mocklock = "mocklock " + release + " " + arch + " " + quotedargs + " " + shellQuote(srpm)
-                def cmd = """#!/bin/bash -e
-                """ + mockShellLib() + mocklock
-                sh(
-                    script: cmd,
-                    label: mocklock
-                )
-            }
+            def mocklock = "mocklock " + release_code + " " + arch + " " + quotedargs
+            def cmd = """#!/bin/bash -e
+            """ + mockShellLib() + mocklock
+            sh(
+                script: cmd,
+                label: mocklock
+            )
         }
     }
 }

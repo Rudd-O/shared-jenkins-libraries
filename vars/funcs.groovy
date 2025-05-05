@@ -484,3 +484,31 @@ def defineJobs() {
         defineJobViaDSL(z)
     }
 }
+
+def slaveRelease() {
+    return sh(
+        script: "rpm -q --queryformat '%{version}' fedora-release",
+        returnStdout: true,
+        label: "Determine this slave's Fedora release",
+    ).trim()
+}
+
+def slaveArch() {
+    sh(
+        script: "uname -m",
+        returnStdout: true,
+        label: "Determine this slave's machine architecture"
+    ).trim()
+}
+
+def releaseCode(String distro, String release) {
+    def releasecode = ""
+    if (distro == "Fedora") {
+        releasecode = "fc" + release
+    } else if (distro == "Qubes OS") {
+        releasecode = "q" + release
+    } else {
+        throw new Exception("Unknown distro ${distro}")
+    }
+    return releasecode
+}

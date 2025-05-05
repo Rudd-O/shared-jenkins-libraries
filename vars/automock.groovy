@@ -10,23 +10,17 @@ def call(String distro, String myRelease) {
             release = myRelease
             arch = "x86_64"
     }
-    if (distro == "Fedora") {
-        release = "fc" + release
-    } else if (distro == "Qubes OS") {
-        release = "q" + release
-    } else {
-        throw new Exception("Unknown distro ${distro}")
-    }
+    def release_code = funcs.releaseCode(distro, release)
     ArrayList srpms = findFiles(glob: 'src/*.src.rpm').collect { it.getPath() }
     if (srpms.size() == 0) {
         throw new Exception("No source RPMs found")
     }
-    dir("out/${release}") {
+    dir("out/${release_code}") {
     }
     ArrayList args = [
         "--define=build_number ${BUILD_NUMBER}",
-        "--resultdir=out/${release}",
+        "--resultdir=out/${release_code}",
         "--rebuild"
-    ]
-    mock(distro, release, arch, args, srpms)
+    ] + srpms
+    mock(distro, release, arch, args)
 }
