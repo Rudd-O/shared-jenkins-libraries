@@ -1,4 +1,10 @@
 def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = null, Closure integration_step = null, Closure test_step = null) {
+	def gopath = "/.cache/gopath"
+	def gocache = "/.cache/gocache"
+	def pip_cache = ".cache/pip"
+	def mock_jaildir = ".local/share/mock"
+	def mock_cachedir = ".cache/mock"
+
 	pipeline {
 		agent none
 		options {
@@ -123,8 +129,11 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 			stage('Prep on slave') {
 				agent { label 'mock' }
 				environment {
-					GOPATH = "${env.WORKSPACE}/../../caches/go"
-					PIP_CACHE_DIR = "${env.WORKSPACE}/../../caches/pip"
+					GOPATH = "${env.HOME}/${gopath}"
+					GOCACHE = "${env.HOME}/${gocache}"
+					PIP_CACHE_DIR = "${env.HOME}/${pip_cache}"
+					MOCK_JAILDIR = "${env.HOME}/${mock_jaildir}"
+					MOCK_CACHEDIR = "${env.HOME}/${mock_cachedir}"
 				}
 				stages {
 					stage('Deps') {
@@ -220,8 +229,6 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 					stage('SRPM') {
 						steps {
 							script {
-								env.MOCK_JAILDIR = "${env.WORKSPACE}/../../jails/mock"
-								env.MOCK_CACHEDIR = "${env.WORKSPACE}/../../caches/mock"
 								dir('src') {
 									if (srpm_step != null) {
 										println "Executing custom SRPM step in directory ./src"
@@ -290,8 +297,8 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								distroandrelease[1].split(" ").each {
 									parallelized["${distroandrelease[0]} ${it}"] = {
 										node('mock') {
-											env.MOCK_JAILDIR = "${env.WORKSPACE}/../../jails/mock"
-											env.MOCK_CACHEDIR = "${env.WORKSPACE}/../../caches/mock"
+											env.MOCK_JAILDIR = "${env.HOME}/${mock_jaildir}"
+											env.MOCK_CACHEDIR = "${env.HOME}/${mock_cachedir}"
 											deleteDir()
 											unstash 'srpm'
 											sh(
