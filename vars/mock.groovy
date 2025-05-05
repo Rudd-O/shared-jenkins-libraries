@@ -3,11 +3,11 @@ def mockShellLib() {
 function config_mocklock_fedora() {
     local outputfile="$1"
     local release="$2"
-    local arch="$3"
-    local basedir="$(realpath -m "$4")"
-    local root="$5"
-    local cache_topdir="$(realpath -m "$6")"
-    local releasewithoutname=$(echo "$release" | sed 's/fc//')
+    local releasewithoutname="$3"
+    local arch="$4"
+    local basedir="$(realpath -m "$5")"
+    local root="$6"
+    local cache_topdir="$(realpath -m "$7")"
 
     cat > "$outputfile" <<EOF
 config_opts['print_main_output'] = True
@@ -98,11 +98,11 @@ EOF
 function config_mocklock_qubes() {
     local outputfile="$1"
     local release="$2"
-    local arch="$3"
-    local basedir="$(realpath -m "$4")"
-    local root="$5"
-    local cache_topdir="$(realpath -m "$6")"
-    local releasewithoutname=$(echo "$release" | sed 's/q//')
+    local releasewithoutname="$3"
+    local arch="$4"
+    local basedir="$(realpath -m "$5")"
+    local root="$6"
+    local cache_topdir="$(realpath -m "$7")"
 
     if [ "$release" == "q4.1" ] ; then
         local fedorareleasever=32
@@ -238,16 +238,18 @@ function mocklock() {
     if [[ $release == q* ]] ; then
         configurator=config_mocklock_qubes
         configname=qubes
+        local releasewithoutname=$(echo "$release" | sed 's/q//')
     elif [[ $release == fc* ]] ; then
         configurator=config_mocklock_fedora
         configname=fedora
+        local releasewithoutname=$(echo "$release" | sed 's/fc//')
     else
         echo "Don't know how to mock $release" >&2
         exit 56
     fi
 
     mkdir -p "$jaildir" "$cachedir"
-    local jail="$configname-$release-$arch-generic"
+    local jail="$configname-$releasewithoutname-$arch-generic"
     local lockfile="$jaildir/$jail.lock"
     local tmpcfg=$(mktemp "$jaildir/tmp-$jail-XXXXXX.cfg")
     local cfgfile="$jaildir/$jail.cfg"
@@ -256,7 +258,7 @@ function mocklock() {
         flock 9
 
         local cfgret=0
-        "$configurator" "$tmpcfg" "$release" "$arch" "$jaildir" "$jail" "$cachedir" || cfgret=$?
+        "$configurator" "$tmpcfg" "$release" "$releasewithoutname" "$arch" "$jaildir" "$jail" "$cachedir" || cfgret=$?
         if [ "$cfgret" != "0" ] ; then rm -f "$tmpcfg" ; exit "$cfgret" ; fi
 
         if diff -Naur "$cfgfile" "$tmpcfg" >&2 ; then
