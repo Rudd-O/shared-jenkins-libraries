@@ -467,6 +467,12 @@ def defineJobViaDSL(job) {
           def traits = x / sources / data / 'jenkins.branch.BranchSource' / source / traits
           traits << 'jenkins.plugins.git.traits.BranchDiscoveryTrait' {}
           traits << 'jenkins.plugins.git.traits.TagDiscoveryTrait' {}
+          def buildStrategies = x / sources / data / 'jenkins.branch.BranchSource' / buildStrategies
+          buildStrategies << 'jenkins.branch.buildstrategies.basic.BranchBuildStrategyImpl' {}
+          buildStrategies << 'jenkins.branch.buildstrategies.basic.TagBuildStrategyImpl' {
+            atLeastMillis(-1)
+            atMostMillis(604000000)
+          }
         }
         if (!jenkins.model.Jenkins.instance.getItemByFullName("${job}")) {
           queue("${job}")
