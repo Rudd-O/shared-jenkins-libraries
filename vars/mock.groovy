@@ -110,6 +110,9 @@ function config_mocklock_qubes() {
     elif [ "$release" == "q4.2" ] ; then
         local fedorareleasever=37
         local qubeskeyver=4.2
+    elif [ "$release" == "q4.3" ] ; then
+        local fedorareleasever=41
+        local qubeskeyver=4.3
     else
         echo Do not know what the matching Fedora release version is for Qubes $release >&2
         exit 55
