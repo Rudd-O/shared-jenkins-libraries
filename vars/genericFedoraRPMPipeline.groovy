@@ -288,7 +288,7 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 				agent none
 				steps {
 					script {
-						parallelized = [:]
+						def parallelized = [:]
 						[
 							["Fedora", env.FEDORA_RELEASES],
 							["Qubes OS", env.QUBES_RELEASES]
