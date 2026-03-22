@@ -213,7 +213,7 @@ skip_if_unavailable=False
 enabled = 1
 metadata_expire = 6h
 gpgcheck = 1
-gpgkey = file:///usr/share/distribution-gpg-keys/qubes/qubes-release-{{ qubeskeyver }}-signing-key.asc
+gpgkey = https://keys.qubes-os.org/keys/qubes-release-{{ qubeskeyver }}-signing-key.asc
 """
 EOF
 }
