@@ -365,12 +365,10 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 								    return $ret
 								}
 								GPG_NAME=$( gpg2 --list-keys | grep -E '^      ([ABCDEF0-9])*$' | head -1 )
+								echo Signing with GPG key ID "$GPG_NAME" >&2
 								>&2 echo "Signing package $1."
-								errout=$(rpm --addsign \
-								    --define "%_gpg_name $GPG_NAME" \
-								    --define '_signature gpg' \
-								    --define '_gpgbin /usr/bin/gpg2' \
-								    --define '__gpg_sign_cmd %{__gpg} gpg --force-v3-sigs --batch --verbose --no-armor --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' \
+								errout=$(rpmsign --addsign \
+								    --define "%_openpgp_sign_id $GPG_NAME" \
 								    "$1" 2>&1) || {
 								    ret=$?
 								    >&2 echo "$errout"
