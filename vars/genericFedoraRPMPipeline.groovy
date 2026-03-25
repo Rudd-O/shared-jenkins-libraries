@@ -149,7 +149,6 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 									'python3-setuptools',
 									'python3-pyyaml',
 									'python3-mypy',
-									'python3-py2pack',
 									'python3-wheel',
 									'python3-tox-current-env',
 									'tox',
