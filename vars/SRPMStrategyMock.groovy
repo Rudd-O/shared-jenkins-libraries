@@ -5,6 +5,7 @@ def call(Map config) {
 		def specfile = funcs.findSpecfile()
 		def buildslave_release = funcs.slaveRelease()
 		def buildslave_machine = funcs.slaveArch()
+		def sources_dir = config.get("sources", "./")
 		mock(
 			"Fedora",
 			buildslave_release,
@@ -14,7 +15,7 @@ def call(Map config) {
 				"--spec",
 				specfile,
 				"--sources",
-				"./",
+				sources_dir,
 				"--resultdir=./"
 			]
 		)
