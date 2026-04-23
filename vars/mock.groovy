@@ -57,7 +57,7 @@ config_opts['dnf.conf'] = """
 [main]
 keepcache=1
 system_cachedir=/var/cache/dnf
-debuglevel=0
+debuglevel=2
 reposdir=/dev/null
 logfile=/var/log/yum.log
 retries=20
@@ -169,7 +169,7 @@ config_opts['dnf.conf'] = """
 [main]
 keepcache=1
 system_cachedir=/var/cache/dnf
-debuglevel=0
+debuglevel=2
 reposdir=/dev/null
 logfile=/var/log/yum.log
 retries=20
@@ -269,6 +269,15 @@ function mocklock() {
         else
             mv -f "$tmpcfg" "$cfgfile"
             echo Reconfigured "$cfgfile" >&2
+            echo Rebuilding jail >&2
+            /usr/bin/mock --no-bootstrap-image -r "$cfgfile" shell whoami || {
+              echo Failed rebuilding jail, retrying once more
+              /usr/bin/mock --no-bootstrap-image -r "$cfgfile" shell whoami || {
+                ret=$?
+                rm -f "$cfgfile"
+                exit $ret
+              }
+            }
         fi
 
         echo "Running process in mock jail $cfgfile" >&2
