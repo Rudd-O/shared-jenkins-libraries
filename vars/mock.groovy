@@ -57,7 +57,7 @@ config_opts['dnf.conf'] = """
 [main]
 keepcache=1
 system_cachedir=/var/cache/dnf
-debuglevel=2
+debuglevel=0
 reposdir=/dev/null
 logfile=/var/log/yum.log
 retries=20
