@@ -1,6 +1,6 @@
 // This strategy calls make srpm in the local directory,
 // expecting an SRPM to be built in the local directory.
-def call(Map config) {
+def call(Map config = [:]) {
     return {
 		def specfile = funcs.findSpecfile()
 		def buildslave_release = funcs.slaveRelease()
