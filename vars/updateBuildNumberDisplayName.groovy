@@ -16,10 +16,10 @@ def call() {
 		returnStdout: true,
 		label: "Generate build name"
 	).trim().split("\n")
-	descs = []
-	dns = []
+	def descs = []
+	def dns = []
 	for (String desc : buildName) {
-		x = desc.split(" ", 3)
+		def x = desc.split(" ", 3)
 		dns.push(x[1])
 		x[0] = funcs.wrapKbd(funcs.escapeXml(x[0])) + ": "
 		x[1] = funcs.wrapKbd(funcs.escapeXml(x[1]))
@@ -37,7 +37,7 @@ def call() {
 		}
 	}
 	if (descs.size() > 0) {
-		desc = funcs.wrapUl(descs.join("\n"))
+		def desc = funcs.wrapUl(descs.join("\n"))
 		currentBuild.description = ((currentBuild.description == null) ? "" : currentBuild.description) + "<p>Source tracking:</p>\n" + desc
 	}
 }

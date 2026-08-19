@@ -218,7 +218,7 @@ def getUpstreamBuild(currentBuild) {
 
 def loadParameter(name, defaultValue) {
     GroovyShell shell = new GroovyShell()
-    defaultsScript = [:]
+    def defaultsScript = [:]
     def paths = [
       env.WORKSPACE + "/src/" + "build.parameters",
     ]
@@ -226,7 +226,7 @@ def loadParameter(name, defaultValue) {
     for (path in paths) {
         try {
             defaultsScript = shell.parse(new File(path)).run()
-            x = defaultsScript.find{ it.key == name }?.value
+            def x = defaultsScript.find{ it.key == name }?.value
             if (x) {
                 println "Loaded parameter ${name}=${x} from ${path}"
                 return x
