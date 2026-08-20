@@ -430,19 +430,6 @@ def gomodvendor() {
     )
 }
 
-def repos() {
-    def jobs = []
-    jobs = sh(
-        script: 'cd /srv/git && ls -1',
-        returnStdout: true
-    )
-    splitData = jobs.tokenize("\n")
-    jobs = splitData.findAll {
-        ! (it == "post-receive" || it == "build" || it == "shared-jenkins-libraries.git" || it == "") 
-    }
-    return jobs
-}
-
 def defineJobViaDSL(job) {
     jobDsl(
         scriptText: """
@@ -481,14 +468,6 @@ def defineJobViaDSL(job) {
     """,
         sandbox: true
     )
-}
-
-def defineJobs() {
-    def r = repos()
-    x = r.collect{ it.substring(0, it.length() - 4) }
-    for (z in x) {
-        defineJobViaDSL(z)
-    }
 }
 
 def slaveRelease() {
