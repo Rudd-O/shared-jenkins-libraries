@@ -237,6 +237,16 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 						steps {
 							script {
 								dir('src') {
+									sh(
+										script: '''#!/bin/bash -e
+										if test -d .git ; then
+											if ! test -d .git/refs ; then
+											    echo "Working around the lack of .git/refs after unstash."
+								    			mkdir .git/refs
+											fi
+										fi''',
+										label: "Work around the lack of .git/refs after unstash",
+									)
 									if (srpm_step != null) {
 										println "Executing custom SRPM step in directory ./src"
 										srpm_step()
