@@ -430,7 +430,7 @@ def gomodvendor() {
     )
 }
 
-def defineJobViaDSL(job) {
+def defineGenericFedoraRPMPipeline(job) {
     jobDsl(
         scriptText: """
     multibranchPipelineJob("${job}") {
