@@ -24,16 +24,24 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 				stages {
 					stage('Begin') {
 						steps {
-							copyArtifacts(
-								projectName: 'get-fedora-releases',
-								selector: upstream(fallbackToLastSuccessful: true)
-							)
-							dir("releases") {
-								script {
-									env.DEFAULT_FEDORA_RELEASES = readFile('fedora').trim()
-									env.DEFAULT_QUBES_RELEASES = "" // We don't build for Qubes OS by default.
+							script {
+								if (params.FEDORA_RELEASES == 'default') {
+									// No need to load default Fedora releases from project;
+									// possibly indicative that get-fedora-releases itself
+									// launched this build, in which case there won't be
+									// any artifacts to copy anyway.
+									copyArtifacts(
+										projectName: 'get-fedora-releases',
+										selector: upstream(fallbackToLastSuccessful: true)
+									)
+									dir("releases") {
+										script {
+											env.DEFAULT_FEDORA_RELEASES = readFile('fedora').trim()
+										}
+										deleteDir()
+									}
 								}
-								deleteDir()
+								env.DEFAULT_QUBES_RELEASES = "" // We don't build for Qubes OS by default.
 							}
 							script {
 								funcs.durable()
@@ -70,15 +78,15 @@ def call(Closure checkout_step = null, Closure srpm_step = null, srpm_deps = nul
 							}
 							script {
 								env.PUBLISH_TO_REPO = funcs.loadParameter('PUBLISH_TO_REPO', '')
-								if (params.FEDORA_RELEASES != 'default') {
-									env.FEDORA_RELEASES = params.FEDORA_RELEASES
-								} else {
+								if (params.FEDORA_RELEASES == 'default') {
 									env.FEDORA_RELEASES = funcs.loadParameter('FEDORA_RELEASES', env.DEFAULT_FEDORA_RELEASES)
-								}
-								if (params.QUBES_RELEASES != 'default') {
-									env.QUBES_RELEASES = params.QUBES_RELEASES
 								} else {
+									env.FEDORA_RELEASES = params.FEDORA_RELEASES
+								}
+								if (params.QUBES_RELEASES == 'default') {
 									env.QUBES_RELEASES = funcs.loadParameter('QUBES_RELEASES', env.DEFAULT_QUBES_RELEASES)
+								} else {
+									env.QUBES_RELEASES = params.QUBES_RELEASES
 								}
 								env.BUILD_DATE = sh(
 									script: """
