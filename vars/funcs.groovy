@@ -77,8 +77,8 @@ String getrpmfield(String filename, String field) {
 }
 
 def getrpmfieldlist(String filename, String fieldPrefix) {
-	ret = []
-    s = getrpmfield(filename, "${fieldPrefix}")
+    def ret = []
+    def s = getrpmfield(filename, "${fieldPrefix}")
     if (s != "") {
         ret.add(s)
     }
@@ -106,23 +106,26 @@ def makeTarballForSpecfile(String sourcetree) {
     // tarball will be deposited in the current directory
     // tarball will contain a single folder named after the
     // base name of the source tree specified here
-    specfile = findSpecfile()
-    tarball_name = basename(getrpmsources(specfile)[0])
+    def specfile = findSpecfile()
+    def tarball_name = basename(getrpmsources(specfile)[0])
 
     // This makes the tarball.
-    sh """
+    sh(
+        """#!/bin/bash -e
         p=\$PWD
         cd ${sourcetree}
         cd ..
         bn=\$(basename ${sourcetree})
         tar -cvz --exclude=.git -f ${tarball_name} \$bn
         mv -f ${tarball_name} \$p
-    """
+        """,
+        label: "Create ${tarball_name}",
+    )
     return tarball_name
 }
 
 def dnfInstall(deps) {
-    deps = deps.collect { shellQuote(it) }
+    def deps = deps.collect { shellQuote(it) }
     deps = deps.join(' ')
     sh(
         script: """#!/bin/bash -e
@@ -136,7 +139,7 @@ def dnfInstall(deps) {
 }
 
 def aptInstall(deps) {
-    deps = deps.collect { shellQuote(it) }
+    def deps = deps.collect { shellQuote(it) }
     deps = deps.join(' ')
     sh(
         script: """#!/bin/bash -e
@@ -282,7 +285,8 @@ def glob(spec) {
 			script: '''#!/bin/bash -e
 			for f in $spec ; do if [ -e "$f" ] ; then echo "$f" ; fi ; done
 			''',
-			returnStdout: true
+			returnStdout: true,
+			label="Glob for ${spec}",
 		).trim().split("\n")
 	}
 	if (filelist.size() == 1 && filelist[0] == "") {
@@ -299,7 +303,8 @@ def srpmFromSpecAndDirContainingSpecSources(srcdir, outdir) {
 	return {
 		filename = sh(
 			returnStdout: true,
-			script: "find src/ -name '*.spec' | head -1"
+			script: "find src/ -name '*.spec' | head -1",
+			label: "Locate specfile",
 		).trim()
 		for (i in getrpmsources(filename)) {
 			sh "if test -f src/${i} ; then cp src/${i} ${srcdir}/ ; fi"
@@ -315,8 +320,7 @@ def srpmFromSpecAndDirContainingSpecSources(srcdir, outdir) {
 def computeSHA256sum(String filename) {
     fn = shellQuote(filename)
     return sh(
-        script: """
-            #!/bin/bash
+        script: """#!/bin/bash
             sha256sum ${fn} | cut -f 1 -d ' '
         """,
         label: "SHA256 sum of ${filename}",
@@ -327,8 +331,7 @@ def computeSHA256sum(String filename) {
 def computeSHA512sum(String filename) {
     fn = shellQuote(filename)
     return sh(
-        script: """
-            #!/bin/bash
+        script: """#!/bin/bash
             sha512sum ${fn} | cut -f 1 -d ' '
         """,
         label: "SHA512 sum of ${filename}",
@@ -343,6 +346,8 @@ def downloadURLUnchecked(url, outpath, simulate=false) {
     // is empty or null, the current directory will be the download
     // target.
     // if simulate is true, the actual download is skipped.
+    def outdir = ""
+    def filename = ""
     if (outpath == null || outpath == "") {
         outdir = "."
         filename = basename(url)
@@ -391,7 +396,7 @@ def downloadURLAndGPGSignature(dataURL, signatureURL) {
     def urlBase = basename(dataURL)
     def checksumBase = basename(signatureURL)
     sh(
-        script: """
+        script: """#!/bin/bash -e
         rm -f -- ${urlBase} ${checksumBase}
         wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${dataURL}
         wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${signatureURL}
@@ -404,7 +409,7 @@ def downloadURLWithSHA256Verification(dataURL, checksumURL) {
     def urlBase = basename(dataURL)
     def checksumBase = basename(checksumURL)
     sh(
-        script: """
+        script: """#!/bin/bash -e
         rm -f -- ${urlBase} ${checksumBase}
         wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${dataURL}
         wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${checksumURL}
@@ -412,7 +417,7 @@ def downloadURLWithSHA256Verification(dataURL, checksumURL) {
         label: "Download ${dataURL} and ${signatureURL}",
     )
     sh(
-        script: """
+        script: """#!/bin/bash -e
         sha256sum -c --ignore-missing ${checksumBase}
         """,
         label: "Calculate checksum of ${urlBase} using ${checksumBase}",
@@ -423,7 +428,7 @@ def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, key
     downloadURLWithSHA256Verification(dataURL, checksumURL)
     def checksumBase = basename(checksumURL)
     sh(
-        script: """
+        script: """#!/bin/bash -e
         GNUPGHOME=`mktemp -d /tmp/.gpg-tmp-XXXXXXX`
         export GNUPGHOME
         eval \$(gpg-agent --homedir "\$GNUPGHOME" --daemon)
