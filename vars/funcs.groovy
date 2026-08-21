@@ -125,7 +125,7 @@ def makeTarballForSpecfile(String sourcetree) {
 }
 
 def dnfInstall(deps) {
-    def deps = deps.collect { shellQuote(it) }
+    deps = deps.collect { shellQuote(it) }
     deps = deps.join(' ')
     sh(
         script: """#!/bin/bash -e
@@ -139,7 +139,7 @@ def dnfInstall(deps) {
 }
 
 def aptInstall(deps) {
-    def deps = deps.collect { shellQuote(it) }
+    deps = deps.collect { shellQuote(it) }
     deps = deps.join(' ')
     sh(
         script: """#!/bin/bash -e
