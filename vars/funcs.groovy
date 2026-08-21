@@ -358,7 +358,7 @@ def downloadURLUnchecked(url, outpath, simulate=false) {
         sh(
             script: """#!/bin/bash -e
                 rm -f -- ${shellQuote(filename)}
-                wget --progress=dot:giga --timeout=15 -O ${shellQuote(filename)} -- ${shellQuote(url)}
+                wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" --progress=dot:giga --timeout=15 -O ${shellQuote(filename)} -- ${shellQuote(url)}
             """,
             label: "Download to ${filename}"
         )
@@ -390,37 +390,49 @@ def downloadURLWithSHA512Checksum(url, sha512sum, outfilename=null) {
 def downloadURLAndGPGSignature(dataURL, signatureURL) {
     def urlBase = basename(dataURL)
     def checksumBase = basename(signatureURL)
-    sh """
-    rm -f -- ${urlBase} ${checksumBase}
-    wget -c --progress=dot:giga --timeout=15 -- ${dataURL}
-    wget -c --progress=dot:giga --timeout=15 -- ${signatureURL}
-    """
+    sh(
+        script: """
+        rm -f -- ${urlBase} ${checksumBase}
+        wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${dataURL}
+        wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${signatureURL}
+        """,
+        label: "Download ${dataURL} and ${signatureURL}",
+    )
 }
 
 def downloadURLWithSHA256Verification(dataURL, checksumURL) {
     def urlBase = basename(dataURL)
     def checksumBase = basename(checksumURL)
-    sh """
-    rm -f -- ${urlBase} ${checksumBase}
-    wget -c --progress=dot:giga --timeout=15 -- ${dataURL}
-    wget -c --progress=dot:giga --timeout=15 -- ${checksumURL}
-    """
-    sh """
-    sha256sum -c --ignore-missing ${checksumBase}
-    """
+    sh(
+        script: """
+        rm -f -- ${urlBase} ${checksumBase}
+        wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${dataURL}
+        wget -U "cargo/1.32.0 (8610973aa 2019-01-02)" -c --progress=dot:giga --timeout=15 -- ${checksumURL}
+        """,
+        label: "Download ${dataURL} and ${signatureURL}",
+    )
+    sh(
+        script: """
+        sha256sum -c --ignore-missing ${checksumBase}
+        """,
+        label: "Calculate checksum of ${urlBase} using ${checksumBase}",
+    )
 }
 
 def downloadURLWithGPGAndSHA256Verification(dataURL, checksumURL, keyServer, keyID) {
     downloadURLWithSHA256Verification(dataURL, checksumURL)
     def checksumBase = basename(checksumURL)
-    sh """
-    GNUPGHOME=`mktemp -d /tmp/.gpg-tmp-XXXXXXX`
-    export GNUPGHOME
-    eval \$(gpg-agent --homedir "\$GNUPGHOME" --daemon)
-    trap 'rm -rf "\$GNUPGHOME"' EXIT
-    gpg2 --verbose --homedir "\$GNUPGHOME" --keyserver ${keyServer} --recv ${keyID}
-    gpg2 --verbose --homedir "\$GNUPGHOME" --verify ${checksumBase}
-    """
+    sh(
+        script: """
+        GNUPGHOME=`mktemp -d /tmp/.gpg-tmp-XXXXXXX`
+        export GNUPGHOME
+        eval \$(gpg-agent --homedir "\$GNUPGHOME" --daemon)
+        trap 'rm -rf "\$GNUPGHOME"' EXIT
+        gpg2 --verbose --homedir "\$GNUPGHOME" --keyserver ${keyServer} --recv ${keyID}
+        gpg2 --verbose --homedir "\$GNUPGHOME" --verify ${checksumBase}
+        """,
+        label: "Verify ${dataURL} with key ${keyID} and checksum file ${checksumBase}",
+    )
 }
 
 def gomodvendor() {
