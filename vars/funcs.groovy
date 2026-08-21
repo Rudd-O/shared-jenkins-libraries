@@ -72,7 +72,7 @@ String getrpmfield(String filename, String field) {
 		script: """#!/bin/bash
 			rpmspec -P ${filename} | grep ^${field}: | awk ' { print \$2 } ' | head -1
 		""",
-        label: "Getting RPM field $field"
+        label: "Get RPM field $field"
 	).trim()
 }
 
@@ -318,7 +318,7 @@ def srpmFromSpecAndDirContainingSpecSources(srcdir, outdir) {
 }
 
 def computeSHA256sum(String filename) {
-    fn = shellQuote(filename)
+    def fn = shellQuote(filename)
     return sh(
         script: """#!/bin/bash
             sha256sum ${fn} | cut -f 1 -d ' '
@@ -329,7 +329,7 @@ def computeSHA256sum(String filename) {
 }
 
 def computeSHA512sum(String filename) {
-    fn = shellQuote(filename)
+    def fn = shellQuote(filename)
     return sh(
         script: """#!/bin/bash
             sha512sum ${fn} | cut -f 1 -d ' '
@@ -372,12 +372,12 @@ def downloadURLUnchecked(url, outpath, simulate=false) {
 }
 
 def downloadURLChecked(url, outputpath, sum, checker) {
-    o = downloadURLUnchecked(url, outputpath, true)
+    def o = downloadURLUnchecked(url, outputpath, true)
     if (checker(o) == sum) {
         return o
     }
     o = downloadURLUnchecked(url, outputpath)
-    actualsum = checker(o)
+    def actualsum = checker(o)
     if (actualsum == sum) {
         return o
     }
